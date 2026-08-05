@@ -32,10 +32,10 @@ class VerifyCharset extends Command
      * Latin-1, y el apóstrofo canónico U+2019, que no es el U+0027 del teclado.
      */
     private const SAMPLES = [
-        "tx'otx'",  // U+2019 duplicado
+        'tx’otx’',  // U+2019 duplicado
         'ẍiky',     // U+1E8D inicial
         'kyiẍ',     // U+1E8D final
-        "xq'exwi'", // apóstrofo glotalizante y saltillo en la misma palabra
+        'xq’exwi’', // apóstrofo glotalizante y saltillo en la misma palabra
         '’',        // saltillo aislado, U+2019
     ];
 
