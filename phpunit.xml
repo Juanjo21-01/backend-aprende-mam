@@ -23,8 +23,23 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <!--
+            Esquema MySQL dedicado, no SQLite. Las migraciones declaran
+            `collate 'utf8mb4_unicode_ci'` en cada columna de texto y SQLite responde
+            `no such collation sequence`, así que ahí no corre ni la migración de
+            `grafemas`. Además el cotejamiento es parte de lo que hay que probar
+            (`x` y `ẍ` son iguales para MySQL), y SQLite daría falsa confianza.
+
+            Crear el esquema una vez:
+              create database aprende_mam_testing
+                character set utf8mb4 collate utf8mb4_unicode_ci;
+
+            `force="true"` para que un DB_DATABASE del .env no se filtre a los tests:
+            RefreshDatabase borraría la base de desarrollo. TestCase lo vuelve a
+            comprobar en tiempo de ejecución.
+        -->
+        <env name="DB_CONNECTION" value="mysql" force="true"/>
+        <env name="DB_DATABASE" value="aprende_mam_testing" force="true"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
