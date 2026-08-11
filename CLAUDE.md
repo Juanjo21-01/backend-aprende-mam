@@ -30,6 +30,16 @@ Romper estas reglas corrompe los datos de una forma que **no se nota en pantalla
 - **`municipio` y `fuente_id` son nullable pero existen.** El proyecto cubre solo San Marcos, pero la trazabilidad bibliográfica es requisito académico y el campo cuesta cero hoy.
 - **Toda entrada nace con `revisado = false`.** Solo el validador lingüístico la marca como revisada. Permite cargar rápido y validar después sin perder el rastro.
 
+## Autenticación y API
+
+- **Panel de administración:** Laravel Sanctum con autenticación de sesión
+  (no tokens de API). Solo hay dos roles: administrador y editor.
+- **Endpoint de exportación:** protegido por token estático en `.env`. Lo consume
+  únicamente el proceso de build del frontend.
+- **No hay autenticación de usuarios finales.** El sitio público no tiene registro.
+  Si aparece una ruta de login para estudiantes, es un error.
+- Limitación de intentos de acceso en el login del panel.
+
 ## Convenciones
 
 - PHP 8.3+ (requisito de Laravel 13), Laravel 13, PSR-12.
