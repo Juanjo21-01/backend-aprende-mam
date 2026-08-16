@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Observers\ContentVersionObserver;
+use App\Observers\PublishableContentObserver;
 use App\Policies\CategoriaPolicy;
 use App\Support\Mam\TextNormalizer;
 use Database\Factories\CategoriaFactory;
@@ -30,7 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 #[Table('categorias')]
 #[UsePolicy(CategoriaPolicy::class)]
-#[ObservedBy(ContentVersionObserver::class)]
+#[ObservedBy(PublishableContentObserver::class)]
 #[Fillable(['nombre_es', 'nombre_mam', 'slug', 'icono', 'orden', 'padre_id'])]
 class Categoria extends Model
 {

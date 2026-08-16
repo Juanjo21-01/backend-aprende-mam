@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Observers\ContentVersionObserver;
+use App\Observers\PublishableContentObserver;
 use App\Policies\FuentePolicy;
 use Database\Factories\FuenteFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -26,7 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 #[Table('fuentes')]
 #[UsePolicy(FuentePolicy::class)]
-#[ObservedBy(ContentVersionObserver::class)]
+#[ObservedBy(PublishableContentObserver::class)]
 #[Fillable(['titulo', 'institucion', 'anio', 'licencia', 'url'])]
 class Fuente extends Model
 {
