@@ -5,9 +5,13 @@ declare(strict_types=1);
 use App\Http\Controllers\Admin\CategoriaController;
 use App\Http\Controllers\Admin\CategoriaGramaticalController;
 use App\Http\Controllers\Admin\CurrentUserController;
+use App\Http\Controllers\Admin\CurrentUserPasswordController;
 use App\Http\Controllers\Admin\EntradaController;
 use App\Http\Controllers\Admin\FuenteController;
 use App\Http\Controllers\Admin\RevisionEntradaController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\UserPasswordController;
+use App\Http\Controllers\Admin\UserStatusController;
 use App\Http\Controllers\ExportController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,8 +36,24 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
 
-    Route::middleware('auth:sanctum')->prefix('admin')->name('admin.')->group(function (): void {
+    Route::middleware(['auth:sanctum', 'usuario.activo'])->prefix('admin')->name('admin.')->group(function (): void {
         Route::get('yo', CurrentUserController::class)->name('yo');
+
+        // Sobre la cuenta propia y ninguna otra: no lleva identificador en la ruta.
+        // La puede usar cualquiera de los dos roles, y pide la contraseña actual.
+        Route::patch('yo/contrasena', [CurrentUserPasswordController::class, 'update'])
+            ->name('yo.contrasena');
+
+        // Cuentas del panel. Solo administradores; lo impone `UserPolicy`.
+        // Sin `destroy`: la baja de una cuenta es desactivarla, no borrarla.
+        Route::apiResource('usuarios', UserController::class)->except('destroy')
+            ->parameters(['usuarios' => 'usuario']);
+
+        Route::patch('usuarios/{usuario}/contrasena', [UserPasswordController::class, 'update'])
+            ->name('usuarios.contrasena');
+
+        Route::patch('usuarios/{usuario}/estado', [UserStatusController::class, 'update'])
+            ->name('usuarios.estado');
 
         Route::apiResource('entradas', EntradaController::class);
 

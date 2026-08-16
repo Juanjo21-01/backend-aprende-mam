@@ -35,7 +35,16 @@ class UserFactory extends Factory
             // El rol de menor privilegio por defecto: si un test se olvida de declararlo,
             // que falle por falta de permisos y no por tenerlos de más.
             'rol' => UserRole::Editor,
+
+            'activo' => true,
         ];
+    }
+
+    public function desactivado(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'activo' => false,
+        ]);
     }
 
     /** El administrador es también el validador lingüístico. */

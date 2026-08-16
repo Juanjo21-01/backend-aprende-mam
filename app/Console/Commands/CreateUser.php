@@ -6,9 +6,9 @@ namespace App\Console\Commands;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use App\Support\PasswordRules;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules\Password;
 
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\select;
@@ -82,7 +82,7 @@ class CreateUser extends Command
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'rol' => ['required', 'string', 'in:'.implode(',', array_column(UserRole::cases(), 'value'))],
-            'password' => ['required', 'confirmed', Password::min(8)],
+            'password' => ['required', 'confirmed', PasswordRules::default()],
         ], [
             'email.unique' => 'Ya existe una cuenta con ese correo.',
             'password.confirmed' => 'Las dos contraseñas no coinciden.',

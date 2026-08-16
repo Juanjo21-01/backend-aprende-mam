@@ -34,6 +34,13 @@
     { "key": "xsrf_token", "value": "" },
     { "key": "entrada_id", "value": "" },
     { "key": "entrada_id_alterna", "value": "" },
+    { "key": "admin_id", "value": "" },
+    { "key": "usuario_prueba_id", "value": "" },
+    {
+      "key": "clave_prueba",
+      "value": "claveDePrueba123",
+      "description": "La que se le pone a la cuenta desechable que crea la carpeta 7."
+    },
     { "key": "categoria_id", "value": "" },
     { "key": "fuente_id", "value": "" }
   ],
@@ -194,6 +201,9 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "pm.collectionVariables.set('admin_id', pm.response.json().id);",
+                  "",
                   "pm.test('es administrador', () => {",
                   "    pm.expect(pm.response.json().es_administrador).to.be.true;",
                   "});"
@@ -955,6 +965,29 @@
           ]
         },
         {
+          "name": "El editor NO ve las cuentas del panel",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/usuarios", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "usuarios"] },
+            "description": "Las cuentas son cosa de administradores. Un editor no tiene por qué ver siquiera quién más usa el sistema."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('prohibido (403)', () => pm.response.to.have.status(403));",
+                  "pm.test('el 403 explica el motivo', () => {",
+                  "    pm.expect(pm.response.json().message).to.include('administrador');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Salir de la sesión de editor",
           "request": {
             "method": "POST",
@@ -997,8 +1030,244 @@
       ]
     },
     {
-      "name": "7 · Limpieza",
-      "description": "Borra lo que creó la corrida para poder repetirla. Requiere sesión de administrador.",
+      "name": "7 · Cuentas y contraseñas",
+      "description": "Gestión de cuentas y las tres formas de fijar una contraseña.\n\n**No hay recuperación por correo, y es deliberado.** Con tres o cuatro cuentas resulta más fiable que un administrador resetee la clave que depender de que el SMTP del alojamiento compartido entregue el mensaje, de que no caiga en spam y de que el destinatario tenga señal para abrirlo. El hueco que eso deja —el administrador único que se queda fuera y no tiene quién se la resetee— lo tapa `php artisan mam:cambiar-contrasena`, que corre en el servidor.\n\n**Las cuentas no se borran, se desactivan.** Una cuenta borrada no vuelve y se lleva el rastro de quién trabajó en el contenido. Por eso la cuenta desechable que crea esta carpeta se queda en la base; el correo lleva marca de tiempo para que no choque en la siguiente corrida. Si querés limpiarlas:\n\n    DELETE FROM users WHERE email LIKE 'prueba-%@ejemplo.edu.gt';",
+      "item": [
+        {
+          "name": "Listar cuentas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/usuarios", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "usuarios"] },
+            "description": "Cada fila trae `es_el_ultimo_administrador` y `es_uno_mismo` para que el panel sepa qué botones no ofrecer."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('marca al administrador que no se puede tocar', () => {",
+                  "    const yo = pm.response.json().data.find(u => u.es_uno_mismo);",
+                  "    pm.expect(yo, 'la cuenta propia aparece en la lista').to.exist;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear una cuenta de prueba",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Cuenta de prueba\",\n    \"email\": \"prueba-{{$timestamp}}@ejemplo.edu.gt\",\n    \"rol\": \"editor\",\n    \"password\": \"{{clave_prueba}}\",\n    \"password_confirmation\": \"{{clave_prueba}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/usuarios", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "usuarios"] },
+            "description": "El correo lleva marca de tiempo porque la cuenta no se va a poder borrar después."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('creada (201)', () => pm.response.to.have.status(201));",
+                  "",
+                  "const usuario = pm.response.json().data;",
+                  "pm.collectionVariables.set('usuario_prueba_id', usuario.id);",
+                  "",
+                  "pm.test('nace activa y con el rol pedido', () => {",
+                  "    pm.expect(usuario.rol).to.equal('editor');",
+                  "    pm.expect(usuario.activo).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resetear la contraseña de esa cuenta",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"password\": \"claveReseteada123\",\n    \"password_confirmation\": \"claveReseteada123\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/usuarios/{{usuario_prueba_id}}/contrasena",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "usuarios", "{{usuario_prueba_id}}", "contrasena"]
+            },
+            "description": "El camino de recuperación del sistema.\n\n**No pide la contraseña anterior, y ese es el punto**: quien la olvidó no la sabe. Lo que autoriza la operación es ser administrador.\n\nAdemás cierra las sesiones que esa persona tuviera abiertas: si el reseteo fue porque se sospecha que alguien más entró, dejarlas vivas anularía la medida."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        },
+        {
+          "name": "Desactivar esa cuenta",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"activo\": false\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/usuarios/{{usuario_prueba_id}}/estado",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "usuarios", "{{usuario_prueba_id}}", "estado"]
+            },
+            "description": "La baja del panel. Surte efecto al instante: las sesiones abiertas de esa persona se cierran, no esperan a expirar."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('quedó desactivada', () => pm.expect(pm.response.json().data.activo).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Volver a activarla",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"activo\": true\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/usuarios/{{usuario_prueba_id}}/estado",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "usuarios", "{{usuario_prueba_id}}", "estado"]
+            },
+            "description": "Que la baja sea reversible es justamente el motivo de no borrar cuentas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('volvió a estar activa', () => pm.expect(pm.response.json().data.activo).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazo · el borrado de cuentas no existe",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/usuarios/{{usuario_prueba_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "usuarios", "{{usuario_prueba_id}}"]
+            },
+            "description": "405 y no 404: la dirección existe —se usa para consultar y editar—, lo que no existe es el verbo. La baja de una cuenta es desactivarla."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('el verbo no existe (405)', () => pm.response.to.have.status(405));"] }
+            }
+          ]
+        },
+        {
+          "name": "Rechazo · desactivarme a mí mismo",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"activo\": false\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/usuarios/{{admin_id}}/estado",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "usuarios", "{{admin_id}}", "estado"]
+            },
+            "description": "La forma más rápida de quedarse fuera del propio panel, y en medio de la sesión."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rechazado (422)', () => pm.response.to.have.status(422));",
+                  "pm.test('el mensaje lo explica', () => {",
+                  "    pm.expect(pm.response.json().errors.activo[0]).to.include('tu propia cuenta');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazo · bajarme el rol a mí mismo",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"rol\": \"editor\"\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/usuarios/{{admin_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "usuarios", "{{admin_id}}"]
+            },
+            "description": "La otra forma. Y si además fuera el único administrador activo, el panel quedaría sin nadie que pueda crear cuentas, borrar contenido ni aprobar una revisión: la única salida sería la consola del servidor."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rechazado (422)', () => pm.response.to.have.status(422));",
+                  "pm.test('señala el rol', () => {",
+                  "    pm.expect(pm.response.json().errors).to.have.property('rol');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazo · cambiar mi contraseña sin saber la actual",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"current_password\": \"la-que-no-es\",\n    \"password\": \"unaClaveNueva123\",\n    \"password_confirmation\": \"unaClaveNueva123\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/yo/contrasena", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "yo", "contrasena"] },
+            "description": "Cambiar la propia contraseña **sí** pide la actual, al revés que el reseteo del administrador. Con eso, un panel abierto y desatendido en la computadora de la escuela no sirve para cambiarle la clave a su dueño y dejarlo fuera.\n\nEsta petición no cambia nada: está para que veas el rechazo. Para cambiarla de verdad, poné tu contraseña real en `current_password` — y acordate de actualizar la variable `admin_password` después."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rechazado (422)', () => pm.response.to.have.status(422));",
+                  "pm.test('señala la contraseña actual', () => {",
+                  "    pm.expect(pm.response.json().errors).to.have.property('current_password');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "8 · Limpieza",
+      "description": "Borra el contenido que creó la corrida para poder repetirla. Requiere sesión de administrador.\n\nLas cuentas de prueba no se borran acá: el panel no borra cuentas por diseño.",
       "item": [
         {
           "name": "Borrar la entrada",

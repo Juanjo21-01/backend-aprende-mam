@@ -26,7 +26,7 @@ Route::middleware('guest')->group(function (): void {
     Route::post('/admin/login', [SessionController::class, 'store']);
 });
 
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['auth', 'usuario.activo'])->group(function (): void {
     Route::post('/admin/logout', [SessionController::class, 'destroy'])->name('logout');
 
     // Cascarón del panel. Atrapa las rutas hijas para que el enrutador de React pueda

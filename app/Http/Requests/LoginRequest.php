@@ -45,13 +45,23 @@ final class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        // `activo` viaja como condición de la consulta, no como comprobación posterior: así
+        // una cuenta desactivada ni siquiera llega a compararse la contraseña.
+        $credenciales = $this->only('email', 'password') + ['activo' => true];
+
+        // `Auth::guard('web')` y no `Auth::attempt()`: este último usa el guard *por
+        // defecto*, que es estado global y puede haber quedado en `sanctum` —un guard de
+        // petición, sin `attempt()`— si algo lo cambió antes. El acceso no puede depender
+        // de eso. `SessionController::destroy()` ya nombraba su guard igual de explícito.
+        if (! Auth::guard('web')->attempt($credenciales, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey(), self::DECAIMIENTO_SEGUNDOS);
 
-            // Un solo mensaje para correo inexistente y contraseña equivocada: distinguirlos
-            // convertiría el formulario en un verificador de qué cuentas existen.
+            // Un solo mensaje para las tres causas —correo inexistente, contraseña
+            // equivocada y cuenta desactivada— porque distinguirlas convertiría el
+            // formulario en un verificador de qué cuentas existen. A quien esté
+            // desactivado se lo dice un administrador, que sí lo ve en el panel.
             throw ValidationException::withMessages([
-                'email' => 'Las credenciales no coinciden con ningún usuario del panel.',
+                'email' => 'Las credenciales no coinciden con ningún usuario activo del panel.',
             ]);
         }
 
