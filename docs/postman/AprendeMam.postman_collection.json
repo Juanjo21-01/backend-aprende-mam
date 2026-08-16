@@ -1,0 +1,1072 @@
+{
+  "info": {
+    "name": "AprendeMam - Endpoints",
+    "description": "Panel de administración y exportación del vocabulario.\n\n## Antes de correr\n\n1. `php artisan serve`\n2. `php artisan mam:crear-usuario` para un administrador y otro para un editor.\n3. Poné esos correos y contraseñas en las variables de la colección.\n4. Para la carpeta de exportación, copiá `EXPORT_TOKEN` de tu `.env` a la variable `export_token`.\n\n## Cómo funciona la autenticación\n\nEl panel usa **sesión**, no tokens. Eso implica tres cosas que la colección ya resuelve sola:\n\n- Hay que pedir `GET /sanctum/csrf-cookie` **una vez** antes de nada. Es la primera petición de la carpeta «0 · Sesión».\n- Toda petición a `/api/v1/admin/*` necesita la cabecera `Referer`. Sin ella, Sanctum no aplica la sesión y responde 401 aunque estés dentro. El script de la colección la agrega a todas.\n- Las escrituras necesitan `X-XSRF-TOKEN`. El script lo lee de la cookie después de cada respuesta y lo guarda en una variable.\n\nSi corrés la colección entera con el Runner, las carpetas van en orden y se encadenan: crear fuente → crear tema → crear entrada → revisarla → verla salir en la exportación → comprobar que el editor no puede borrar → limpiar.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "description": "Sin barra final. Tiene que coincidir con el host donde corre `php artisan serve`."
+    },
+    {
+      "key": "admin_email",
+      "value": "admin@local.test"
+    },
+    {
+      "key": "admin_password",
+      "value": "clave-de-prueba"
+    },
+    {
+      "key": "editor_email",
+      "value": "editor@local.test"
+    },
+    {
+      "key": "editor_password",
+      "value": "clave-de-prueba"
+    },
+    {
+      "key": "export_token",
+      "value": "",
+      "description": "Copiar de EXPORT_TOKEN en el .env. Se deja vacío a propósito para no meter un secreto en el repositorio."
+    },
+    { "key": "xsrf_token", "value": "" },
+    { "key": "entrada_id", "value": "" },
+    { "key": "entrada_id_alterna", "value": "" },
+    { "key": "categoria_id", "value": "" },
+    { "key": "fuente_id", "value": "" }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Cabeceras que necesita toda la colección.",
+          "pm.request.headers.upsert({ key: 'Accept', value: 'application/json' });",
+          "",
+          "// `Referer` no es cosmético: Sanctum solo trata la petición como del panel —y por",
+          "// tanto le aplica la sesión— si viene con Referer u Origin de un dominio conocido.",
+          "// Sin esto, /api/v1/admin/* responde 401 aunque hayas entrado correctamente.",
+          "pm.request.headers.upsert({",
+          "    key: 'Referer',",
+          "    value: pm.collectionVariables.get('base_url') + '/admin'",
+          "});",
+          "",
+          "// Token CSRF para las escrituras. Lo dejó guardado el script de la respuesta anterior.",
+          "const xsrf = pm.collectionVariables.get('xsrf_token');",
+          "",
+          "if (xsrf) {",
+          "    pm.request.headers.upsert({ key: 'X-XSRF-TOKEN', value: xsrf });",
+          "}"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Refresca el token CSRF después de cada respuesta.",
+          "//",
+          "// Hace falta releerlo siempre: al entrar, Laravel regenera la sesión contra la fijación",
+          "// de sesión, y con ella cambia el token. Si se guardara una sola vez al principio, la",
+          "// primera escritura después del login fallaría con 419.",
+          "(function guardarTokenCsrf() {",
+          "    let valor = null;",
+          "",
+          "    try {",
+          "        valor = pm.cookies.get('XSRF-TOKEN') || null;",
+          "    } catch (e) {",
+          "        // Algunas versiones de Postman piden habilitar el dominio para leer cookies.",
+          "        // Si pasa, se cae al plan B de abajo.",
+          "    }",
+          "",
+          "    if (!valor) {",
+          "        pm.response.headers.all()",
+          "            .filter(function (h) { return h.key.toLowerCase() === 'set-cookie'; })",
+          "            .forEach(function (h) {",
+          "                const encontrado = /XSRF-TOKEN=([^;]+)/.exec(h.value);",
+          "                if (encontrado) { valor = encontrado[1]; }",
+          "            });",
+          "    }",
+          "",
+          "    if (valor) {",
+          "        pm.collectionVariables.set('xsrf_token', decodeURIComponent(valor));",
+          "    }",
+          "})();"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "0 · Sesión",
+      "description": "Correr esto primero. La cookie CSRF es un requisito de la autenticación por sesión.",
+      "item": [
+        {
+          "name": "Obtener cookie CSRF",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/sanctum/csrf-cookie", "host": ["{{base_url}}"], "path": ["sanctum", "csrf-cookie"] },
+            "description": "Responde 204 sin cuerpo. Lo único que importa es la cookie que deja."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 204', () => pm.response.to.have.status(204));",
+                  "pm.test('quedó guardado el token CSRF', () => {",
+                  "    pm.expect(pm.collectionVariables.get('xsrf_token')).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cerrar cualquier sesión previa",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/admin/logout", "host": ["{{base_url}}"], "path": ["admin", "logout"] },
+            "description": "Hace la colección repetible.\n\nLa ruta de acceso lleva middleware `guest`: si ya hay sesión abierta, Laravel **no procesa el login**, solo redirige. El 302 se parece a un acceso correcto pero la sesión sigue siendo la anterior, y las peticiones que vienen después las hace el usuario equivocado.\n\nResponde 302 tanto si había sesión como si no."
+          },
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('responde 302', () => pm.response.to.have.status(302));"]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Entrar como administrador",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"email\": \"{{admin_email}}\",\n    \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/admin/login", "host": ["{{base_url}}"], "path": ["admin", "login"] },
+            "description": "Ruta web, no de API: devuelve una redirección al panel. La colección no la sigue, para que la respuesta sea legible.\n\nSi las credenciales no sirven, responde 422 con el mensaje de error."
+          },
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('entró (302 al panel)', () => pm.response.to.have.status(302));",
+                  "",
+                  "// No basta con el 302: el middleware `guest` también redirige, con 302, cuando",
+                  "// ya había sesión abierta. La diferencia está en el destino: un acceso correcto",
+                  "// manda a /admin; el rebote de `guest`, a la raíz.",
+                  "pm.test('el 302 es del acceso, no del rebote de guest', () => {",
+                  "    pm.expect(pm.response.headers.get('Location')).to.match(/\\/admin$/);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Quién soy",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/yo", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "yo"] },
+            "description": "Lo primero que pide el panel al arrancar: sin esto no sabe si dibujar los botones de borrar ni el interruptor de revisión."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('es administrador', () => {",
+                  "    pm.expect(pm.response.json().es_administrador).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 · Fuentes",
+      "description": "Trazabilidad bibliográfica. A diferencia de las entradas, el título NO pasa por el normalizador: es una cita y tiene que reproducir la portada tal como está impresa.",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/fuentes", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "fuentes"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"titulo\": \"Tu'jil Qyol Mam te Tkab'in Yol\",\n    \"institucion\": \"DIDEDUC San Marcos, MINEDUC\",\n    \"anio\": 2011,\n    \"licencia\": \"Reproducción sin fines comerciales citando la fuente\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/fuentes", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "fuentes"] },
+            "description": "El título va con apóstrofos rectos a propósito: acá NO se normalizan, y el test lo comprueba."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('creada (201)', () => pm.response.to.have.status(201));",
+                  "",
+                  "const fuente = pm.response.json().data;",
+                  "pm.collectionVariables.set('fuente_id', fuente.id);",
+                  "",
+                  "pm.test('el título se guarda tal cual está impreso', () => {",
+                  "    pm.expect(fuente.titulo).to.equal(\"Tu'jil Qyol Mam te Tkab'in Yol\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver una",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/fuentes/{{fuente_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "fuentes", "{{fuente_id}}"] }
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Editar",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"anio\": 2012\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/admin/fuentes/{{fuente_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "fuentes", "{{fuente_id}}"] },
+            "description": "Edición parcial: basta mandar lo que cambió."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('cambió el año', () => pm.expect(pm.response.json().data.anio).to.equal(2012));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazo · año en el futuro",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"titulo\": \"Un libro que no existe\",\n    \"anio\": 2999\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/admin/fuentes", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "fuentes"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rechazada (422)', () => pm.response.to.have.status(422));",
+                  "pm.test('el mensaje está en castellano', () => {",
+                  "    pm.expect(pm.response.json().errors.anio[0]).to.include('futuro');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 · Categorías",
+      "description": "Temas del vocabulario. `nombre_mam` sí es texto en idioma Mam y pasa por el normalizador.",
+      "item": [
+        {
+          "name": "Listar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/categorias", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "categorias"] },
+            "description": "Sin paginar: son decenas de temas, no miles, y el formulario de entradas necesita la lista completa."
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Crear",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre_es\": \"Animales\",\n    \"nombre_mam\": \"Kyiõ txkup\",\n    \"slug\": \"animales\",\n    \"orden\": 1\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/categorias", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "categorias"] },
+            "description": "`nombre_mam` lleva la corrupción `õ` de los PDF de origen. El sistema la corrige al guardar, como promete el Manual de Normas."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('creada (201)', () => pm.response.to.have.status(201));",
+                  "",
+                  "const tema = pm.response.json().data;",
+                  "pm.collectionVariables.set('categoria_id', tema.id);",
+                  "",
+                  "pm.test('corrigió õ → ẍ en el nombre en Mam', () => {",
+                  "    pm.expect(tema.nombre_mam).to.equal('Kyiẍ txkup');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ver una",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/categorias/{{categoria_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "categorias", "{{categoria_id}}"] }
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Editar",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"nombre_es\": \"Animales del monte\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/admin/categorias/{{categoria_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "categorias", "{{categoria_id}}"] }
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Rechazo · dirección con mayúsculas",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"nombre_es\": \"Medicina natural\",\n    \"slug\": \"Medicina Natural\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/admin/categorias", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "categorias"] },
+            "description": "El slug va en la URL del sitio estático: solo minúsculas, números y guiones."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('rechazada (422)', () => pm.response.to.have.status(422));"] }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 · Entradas",
+      "description": "El corazón del diccionario. Acá se ve la ingeniería ortográfica funcionando: normalización al guardar, columnas derivadas y orden alfabético del Mam.",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Arma trozos de JSON válidos para el cuerpo de «Crear».",
+              "//",
+              "// Sin esto, correr esta carpeta suelta —sin haber creado antes una fuente y un",
+              "// tema— dejaría un hueco en el JSON (`\"fuente_id\": ,`) y Postman mandaría un",
+              "// cuerpo roto, con un error que no dice nada de lo que pasó de verdad.",
+              "const fuente = pm.collectionVariables.get('fuente_id');",
+              "pm.collectionVariables.set('fuente_id_json', fuente ? fuente : 'null');",
+              "",
+              "const tema = pm.collectionVariables.get('categoria_id');",
+              "pm.collectionVariables.set('categorias_json', tema ? '[' + tema + ']' : '[]');"
+            ]
+          }
+        }
+      ],
+      "item": [
+        {
+          "name": "Crear · texto pegado de un PDF antiguo",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mam\": \"õiky\",\n    \"espanol\": \"conejo\",\n    \"definicion\": \"Animal silvestre de orejas largas.\",\n    \"fuente_id\": {{fuente_id_json}},\n    \"pagina_fuente\": \"112\",\n    \"categorias\": {{categorias_json}}\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/entradas", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "entradas"] },
+            "description": "El caso real de la guía operativa: el editor copia de un PDF de MINEDUC y la `ẍ` llega convertida en `õ`.\n\nEl sistema lo corrige solo. `busqueda` y `orden_alfabetico` se derivan del lema ya normalizado.\n\n`orden_alfabetico` sale `300610` = [ẍ]=30, [i]=06, [ky]=10. Fijate que `ky` cuenta como **una** letra."
+            },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('creada (201)', () => pm.response.to.have.status(201));",
+                  "",
+                  "const entrada = pm.response.json().data;",
+                  "pm.collectionVariables.set('entrada_id', entrada.id);",
+                  "",
+                  "pm.test('corrigió õ → ẍ', () => pm.expect(entrada.mam).to.equal('ẍiky'));",
+                  "",
+                  "pm.test('derivó la clave de búsqueda sin diéresis', () => {",
+                  "    pm.expect(entrada.busqueda).to.equal('xiky');",
+                  "});",
+                  "",
+                  "pm.test('derivó el orden tratando ky como una sola letra', () => {",
+                  "    pm.expect(entrada.orden_alfabetico).to.equal('300610');",
+                  "});",
+                  "",
+                  "pm.test('nace sin revisar', () => pm.expect(entrada.revisado).to.be.false);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear · apóstrofo del teclado",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"mam\": \"q'aq'\",\n    \"espanol\": \"fuego\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/admin/entradas", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "entradas"] },
+            "description": "El apóstrofo recto U+0027 se convierte al canónico U+2019. El corpus del COLIMAM trae 5,152 del primero contra 181 del segundo."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('creada (201)', () => pm.response.to.have.status(201));",
+                  "",
+                  "const entrada = pm.response.json().data;",
+                  "pm.collectionVariables.set('entrada_id_alterna', entrada.id);",
+                  "",
+                  "pm.test('usa el apóstrofo canónico U+2019', () => {",
+                  "    pm.expect(entrada.mam).to.equal('q\\u2019aq\\u2019');",
+                  "    pm.expect(entrada.mam).to.not.include(\"'\");",
+                  "});",
+                  "",
+                  "pm.test('la búsqueda no lleva apóstrofos', () => {",
+                  "    pm.expect(entrada.busqueda).to.equal('qaq');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar · en orden alfabético Mam",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/entradas?por_pagina=50",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "entradas"],
+              "query": [{ "key": "por_pagina", "value": "50" }]
+            },
+            "description": "Ordena por `orden_alfabetico`, nunca por `mam`. En Mam, `q'aq'` (18) va antes que `ẍiky` (30); el cotejamiento de MySQL ni siquiera distingue `x` de `ẍ`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "const claves = pm.response.json().data.map(e => e.orden_alfabetico);",
+                  "",
+                  "pm.test('viene ordenado por la clave de intercalación', () => {",
+                  "    const ordenado = claves.slice().sort();",
+                  "    pm.expect(claves).to.deep.equal(ordenado);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Buscar · sin escribir la diéresis",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/entradas?buscar=xiky",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "entradas"],
+              "query": [{ "key": "buscar", "value": "xiky" }]
+            },
+            "description": "Ningún estudiante teclea `ẍ` ni el saltillo. La búsqueda pasa el término por la misma función que generó la columna, así que `xiky`, `ẍiky` y `ẌIKY` encuentran lo mismo.\n\nProbá también con `buscar=qaq` o `buscar=q'aq'`."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('encontró la entrada con diéresis', () => {",
+                  "    pm.expect(pm.response.json().data.map(e => e.mam)).to.include('ẍiky');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filtrar · sin revisar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/entradas?revisado=0",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "entradas"],
+              "query": [{ "key": "revisado", "value": "0" }]
+            },
+            "description": "La cola de trabajo del validador lingüístico."
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"] } }
+          ]
+        },
+        {
+          "name": "Ver una",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/entradas/{{entrada_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "entradas", "{{entrada_id}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('trae su fuente y sus temas', () => {",
+                  "    const d = pm.response.json().data;",
+                  "    pm.expect(d.fuente).to.not.be.null;",
+                  "    pm.expect(d.categorias).to.have.lengthOf.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Editar · el lema recalcula las derivadas",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"mam\": \"tz'is\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/admin/entradas/{{entrada_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "entradas", "{{entrada_id}}"] },
+            "description": "Cambiar el lema arrastra `busqueda` y `orden_alfabetico`; si no, quedarían mintiendo.\n\n`tz'is` → [tz'][i][s] → 26 06 20."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "const entrada = pm.response.json().data;",
+                  "",
+                  "pm.test('recalculó la clave de ordenamiento', () => {",
+                  "    pm.expect(entrada.orden_alfabetico).to.equal('260620');",
+                  "});",
+                  "",
+                  "pm.test('recalculó la clave de búsqueda', () => {",
+                  "    pm.expect(entrada.busqueda).to.equal('tzis');",
+                  "});",
+                  "",
+                  "pm.test('la edición parcial conservó los temas', () => {",
+                  "    pm.expect(entrada.categorias).to.have.lengthOf.at.least(1);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazo · mandar una columna derivada",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"mam\": \"jal\",\n    \"espanol\": \"mazorca\",\n    \"busqueda\": \"inventada\",\n    \"orden_alfabetico\": \"999999\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/v1/admin/entradas", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "entradas"] },
+            "description": "Las derivadas las calcula el sistema. Un request que las traiga falla ruidosamente en vez de que se ignoren en silencio."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('rechazada (422)', () => pm.response.to.have.status(422));",
+                  "pm.test('señala las dos columnas', () => {",
+                  "    const errores = pm.response.json().errors;",
+                  "    pm.expect(errores).to.have.property('busqueda');",
+                  "    pm.expect(errores).to.have.property('orden_alfabetico');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazo · marcar revisado desde el formulario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"mam\": \"jal\",\n    \"espanol\": \"mazorca\",\n    \"revisado\": true\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/admin/entradas", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "entradas"] },
+            "description": "La revisión tiene su propia acción y su propia política. No se puede colar en el formulario, ni siendo administrador."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('rechazada (422)', () => pm.response.to.have.status(422));"] }
+            }
+          ]
+        },
+        {
+          "name": "Marcar como revisada",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"revisado\": true\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/entradas/{{entrada_id}}/revision",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "entradas", "{{entrada_id}}", "revision"]
+            },
+            "description": "La firma del validador lingüístico, y el interruptor de publicación: la exportación solo lleva lo revisado.\n\nSolo administrador. Es reversible: mandá `false` para retirarla."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('quedó revisada', () => pm.expect(pm.response.json().data.revisado).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 · Catálogo gramatical",
+      "item": [
+        {
+          "name": "Clases de palabra",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/categorias-gramaticales",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "categorias-gramaticales"]
+            },
+            "description": "Solo lectura: es el catálogo normativo de ALMG, no contenido del proyecto. Se cambia re-sembrando.\n\nCuatro de sus clases —posicional, afectivo, direccional y clasificador— son propias de las lenguas mayas y no tienen equivalente en castellano."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('trae las 16 clases', () => pm.expect(pm.response.json().data).to.have.lengthOf(16));",
+                  "pm.test('conserva las clases mayas', () => {",
+                  "    const abrev = pm.response.json().data.map(c => c.abreviatura);",
+                  "    ['pos.', 'afect.', 'dir.', 'clas.'].forEach(a => pm.expect(abrev).to.include(a));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 · Exportación",
+      "description": "La única salida de datos del backend. La consume el proceso de compilación de Astro, no un navegador, así que va con token estático y no con sesión.\n\nHay que poner `export_token` (está en el `.env` como `EXPORT_TOKEN`).",
+      "item": [
+        {
+          "name": "Versión del contenido",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{export_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/export/version", "host": ["{{base_url}}"], "path": ["api", "v1", "export", "version"] },
+            "description": "Endpoint ligero: la compilación pregunta esto antes de bajarse el vocabulario entero. Si el número no cambió, no hay nada que compilar."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('trae un número de versión', () => {",
+                  "    pm.expect(pm.response.json().version).to.be.a('number');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Vocabulario completo",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{export_token}}" }],
+            "url": { "raw": "{{base_url}}/api/v1/export/vocabulario.json", "host": ["{{base_url}}"], "path": ["api", "v1", "export", "vocabulario.json"] },
+            "description": "Solo entradas con `revisado = true`. Nada llega a manos de una estudiante sin que el validador lingüístico haya dado fe de que el Mam está bien escrito.\n\nCada entrada viaja con `busqueda` y `orden` ya calculados: el navegador no tiene que saber nada de la ortografía del Mam."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "const datos = pm.response.json();",
+                  "",
+                  "pm.test('trae versión, temas y entradas', () => {",
+                  "    pm.expect(datos).to.have.all.keys('version', 'generado_en', 'categorias', 'entradas');",
+                  "});",
+                  "",
+                  "pm.test('cada entrada lleva sus claves derivadas', () => {",
+                  "    datos.entradas.forEach(e => {",
+                  "        pm.expect(e.busqueda, 'busqueda de ' + e.mam).to.be.a('string');",
+                  "        pm.expect(e.orden, 'orden de ' + e.mam).to.match(/^[0-9]*$/);",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('ninguna entrada trae caracteres corruptos', () => {",
+                  "    // El requisito no funcional del proyecto: cero ocurrencias de õ, U+0027 o",
+                  "    // U+02BC en los campos en idioma Mam de la base publicada.",
+                  "    datos.entradas.forEach(e => {",
+                  "        pm.expect(e.mam, 'lema ' + e.mam).to.not.match(/[\\u00F5\\u00D5\\u0027\\u02BC]/);",
+                  "    });",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Rechazo · sin token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/export/vocabulario.json", "host": ["{{base_url}}"], "path": ["api", "v1", "export", "vocabulario.json"] },
+            "description": "Sin token no se publica nada, ni con la sesión del panel abierta: quien llama es un proceso de compilación, no un navegador."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('rechazada (401)', () => pm.response.to.have.status(401));"] }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 · Roles y permisos",
+      "description": "El editor carga y corrige; el administrador además borra y marca lo revisado.\n\nEsta carpeta cambia de sesión. **Hay que salir antes de entrar con otra cuenta**: la ruta de acceso lleva middleware `guest`, así que con una sesión abierta el login no se procesa y la sesión anterior sigue vigente. Es un error silencioso —responde 302, igual que un acceso correcto— y haría que estas comprobaciones las corriera el administrador, con lo que los 403 nunca aparecerían.",
+      "item": [
+        {
+          "name": "Salir de la sesión de administrador",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/admin/logout", "host": ["{{base_url}}"], "path": ["admin", "logout"] }
+          },
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('salió (302)', () => pm.response.to.have.status(302));"] }
+            }
+          ]
+        },
+        {
+          "name": "Entrar como editor",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"email\": \"{{editor_email}}\",\n    \"password\": \"{{editor_password}}\"\n}" },
+            "url": { "raw": "{{base_url}}/admin/login", "host": ["{{base_url}}"], "path": ["admin", "login"] }
+          },
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('entró (302)', () => pm.response.to.have.status(302));",
+                  "pm.test('el 302 es del acceso, no del rebote de guest', () => {",
+                  "    pm.expect(pm.response.headers.get('Location')).to.match(/\\/admin$/);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirmar que la sesión es del editor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/yo", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "yo"] },
+            "description": "El pasador de esta carpeta. Sin esta comprobación, un cambio de sesión que falla en silencio haría pasar los dos 403 de abajo... porque nunca llegarían a probarse."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('la sesión es del editor, no del administrador', () => {",
+                  "    pm.expect(pm.response.json().rol).to.equal('editor');",
+                  "    pm.expect(pm.response.json().es_administrador).to.be.false;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "El editor NO puede borrar",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/entradas/{{entrada_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "entradas", "{{entrada_id}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('prohibido (403)', () => pm.response.to.have.status(403));",
+                  "pm.test('el 403 explica el motivo', () => {",
+                  "    pm.expect(pm.response.json().message).to.include('administrador');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "El editor NO puede marcar revisado",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"revisado\": false\n}" },
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/entradas/{{entrada_id}}/revision",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "entradas", "{{entrada_id}}", "revision"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('prohibido (403)', () => pm.response.to.have.status(403));",
+                  "pm.test('nombra al validador lingüístico', () => {",
+                  "    pm.expect(pm.response.json().message).to.include('validador');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "El editor SÍ puede editar",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"espanol\": \"basura; desecho\"\n}" },
+            "url": { "raw": "{{base_url}}/api/v1/admin/entradas/{{entrada_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "entradas", "{{entrada_id}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('responde 200', () => pm.response.to.have.status(200));"] }
+            }
+          ]
+        },
+        {
+          "name": "Salir de la sesión de editor",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/admin/logout", "host": ["{{base_url}}"], "path": ["admin", "logout"] }
+          },
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('salió (302)', () => pm.response.to.have.status(302));"] }
+            }
+          ]
+        },
+        {
+          "name": "Volver a entrar como administrador",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n    \"email\": \"{{admin_email}}\",\n    \"password\": \"{{admin_password}}\"\n}" },
+            "url": { "raw": "{{base_url}}/admin/login", "host": ["{{base_url}}"], "path": ["admin", "login"] },
+            "description": "La sesión es del navegador, no del usuario: para cambiar de cuenta hay que salir y volver a entrar. Lo necesita la carpeta de limpieza, que borra y por tanto exige administrador."
+          },
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('entró (302)', () => pm.response.to.have.status(302));",
+                  "pm.test('el 302 es del acceso, no del rebote de guest', () => {",
+                  "    pm.expect(pm.response.headers.get('Location')).to.match(/\\/admin$/);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7 · Limpieza",
+      "description": "Borra lo que creó la corrida para poder repetirla. Requiere sesión de administrador.",
+      "item": [
+        {
+          "name": "Borrar la entrada",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/entradas/{{entrada_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "entradas", "{{entrada_id}}"] }
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('borrada (204)', () => pm.response.to.have.status(204));"] } }
+          ]
+        },
+        {
+          "name": "Borrar la segunda entrada",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/admin/entradas/{{entrada_id_alterna}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "v1", "admin", "entradas", "{{entrada_id_alterna}}"]
+            },
+            "description": "La de «Crear · apóstrofo del teclado». Sin esto, cada corrida dejaría una `q’aq’` de más."
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('borrada (204)', () => pm.response.to.have.status(204));"] } }
+          ]
+        },
+        {
+          "name": "Borrar el tema",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/categorias/{{categoria_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "categorias", "{{categoria_id}}"] },
+            "description": "Borrar un tema no se lleva las palabras: cae el pivote y nada más."
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('borrado (204)', () => pm.response.to.have.status(204));"] } }
+          ]
+        },
+        {
+          "name": "Borrar la fuente",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/v1/admin/fuentes/{{fuente_id}}", "host": ["{{base_url}}"], "path": ["api", "v1", "admin", "fuentes", "{{fuente_id}}"] },
+            "description": "Las entradas que la citaban quedan con `fuente_id` nulo, no se borran."
+          },
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('borrada (204)', () => pm.response.to.have.status(204));"] } }
+          ]
+        },
+        {
+          "name": "Salir",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/admin/logout", "host": ["{{base_url}}"], "path": ["admin", "logout"] }
+          },
+          "protocolProfileBehavior": { "followRedirects": false },
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('salió (302 al formulario)', () => pm.response.to.have.status(302));"] }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

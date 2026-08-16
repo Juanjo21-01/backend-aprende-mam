@@ -16,6 +16,9 @@ class DatabaseSeeder extends Seeder
         $this->call([
             // Catálogo base: todo lo ortográfico depende de él.
             GrafemasSeeder::class,
+
+            // Catálogo del que cuelga `entradas.categoria_gramatical_id`.
+            CategoriasGramaticalesSeeder::class,
         ]);
     }
 }
