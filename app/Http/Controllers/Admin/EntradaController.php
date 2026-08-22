@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\DB;
 final class EntradaController extends Controller
 {
     /** Relaciones que el panel siempre necesita para pintar una fila o un formulario. */
-    private const RELACIONES = ['categoriaGramatical', 'fuente', 'categorias'];
+    private const RELACIONES = ['categoriaGramatical', 'fuente', 'categorias', 'creador', 'revisor'];
 
     #[Authorize('viewAny', Entrada::class)]
     public function index(Request $request): AnonymousResourceCollection

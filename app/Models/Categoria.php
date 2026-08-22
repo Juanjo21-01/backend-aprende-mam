@@ -55,11 +55,15 @@ class Categoria extends Model
         );
     }
 
-    /** El orden lo decide el docente; dentro de un mismo peso, alfabético del castellano. */
+    /**
+     * El orden lo decide el docente; dentro de un mismo peso, alfabético del castellano, y
+     * el `id` desempata lo que aún quede igual. Sin ese último criterio, dos temas con el
+     * mismo peso y el mismo nombre bailarían de sitio entre una carga y la siguiente.
+     */
     #[Scope]
     protected function enOrdenDelPanel(Builder $query): void
     {
-        $query->orderBy('orden')->orderBy('nombre_es');
+        $query->orderBy('orden')->orderBy('nombre_es')->orderBy('id');
     }
 
     public function padre(): BelongsTo

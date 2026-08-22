@@ -38,7 +38,7 @@ final class RevisionEntradaController extends Controller
         $entrada->save();
 
         return EntradaResource::make(
-            $entrada->load(['categoriaGramatical', 'fuente', 'categorias'])
+            $entrada->load(['categoriaGramatical', 'fuente', 'categorias', 'creador', 'revisor'])
         );
     }
 }

@@ -23,6 +23,7 @@ final class FuenteController extends Controller
         $fuentes = Fuente::query()
             ->withCount('entradas')
             ->orderBy('titulo')
+            ->orderBy('id') // Desempate: dos ediciones de la misma obra comparten título.
             ->get();
 
         return FuenteResource::collection($fuentes);

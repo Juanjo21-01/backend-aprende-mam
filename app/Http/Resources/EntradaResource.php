@@ -33,6 +33,13 @@ final class EntradaResource extends JsonResource
             'municipio' => $this->municipio,
             'pagina_fuente' => $this->pagina_fuente,
             'revisado' => $this->revisado,
+            'revisado_en' => $this->revisado_en,
+
+            // Autoría en forma reducida, no con `UserResource`: eso traería correo, rol y
+            // estado de cada cuenta en cada fila de un listado de cincuenta, y además
+            // dispararía una consulta por fila para calcular si es el último administrador.
+            'creado_por' => $this->usuario('creador'),
+            'revisado_por' => $this->usuario('revisor'),
 
             'categoria_gramatical' => CategoriaGramaticalResource::make(
                 $this->whenLoaded('categoriaGramatical')
@@ -43,5 +50,22 @@ final class EntradaResource extends JsonResource
             'creado_en' => $this->created_at,
             'actualizado_en' => $this->updated_at,
         ];
+    }
+
+    /**
+     * La relación puede estar cargada y valer `null`: una entrada importada no tiene quien
+     * la cargara, y una sin revisar no tiene revisor. Si no se cargó, la clave desaparece
+     * de la respuesta en lugar de mentir con un `null`.
+     */
+    private function usuario(string $relacion): mixed
+    {
+        return $this->whenLoaded($relacion, function () use ($relacion): ?array {
+            $usuario = $this->{$relacion};
+
+            return $usuario === null ? null : [
+                'id' => $usuario->id,
+                'nombre' => $usuario->name,
+            ];
+        });
     }
 }

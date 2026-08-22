@@ -706,7 +706,15 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('responde 200', () => pm.response.to.have.status(200));",
-                  "pm.test('quedó revisada', () => pm.expect(pm.response.json().data.revisado).to.be.true);"
+                  "pm.test('quedó revisada', () => pm.expect(pm.response.json().data.revisado).to.be.true);",
+                  "",
+                  "// La trazabilidad que exige el proyecto: no basta con saber que está",
+                  "// revisada, hay que saber quién dio fe y cuándo.",
+                  "pm.test('quedó registrado quién la revisó y cuándo', () => {",
+                  "    const entrada = pm.response.json().data;",
+                  "    pm.expect(entrada.revisado_por, 'revisado_por').to.not.be.null;",
+                  "    pm.expect(entrada.revisado_en, 'revisado_en').to.not.be.null;",
+                  "});"
                 ]
               }
             }
