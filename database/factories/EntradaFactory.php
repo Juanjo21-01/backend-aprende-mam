@@ -13,31 +13,47 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class EntradaFactory extends Factory
 {
     /**
-     * Lemas reales del corpus, no palabras inventadas por Faker.
+     * Lemas reales del corpus **con glosas verificadas contra la fuente**.
      *
-     * Importa: un lema en castellano no ejercitaría ni los dígrafos ni las glotalizadas ni
-     * `ẍ`, que es justo lo que puede romperse. Estos cubren los tres casos y salen de los
-     * vectores de `.claude/rules/ortografia-mam.md`.
+     * Importa por dos motivos. El primero es técnico: un lema en castellano no ejercitaría
+     * ni los dígrafos ni las glotalizadas ni `ẍ`, que es justo lo que puede romperse.
+     *
+     * El segundo es de integridad, y costó descubrirlo. Una versión anterior de esta lista
+     * traía significados escritos de memoria: `chmol` figuraba como «reunión» cuando el
+     * COLIMAM dice **araña**, y `a’witz` como «cerro» cuando dice **hoja**. Tres de catorce
+     * estaban mal. En un proyecto cuyo objeto es preservar un idioma, un dato inventado en
+     * un fixture es un dato inventado que alguien puede copiar.
+     *
+     * **Regla: no agregar un lema a esta lista sin haberlo leído en una fuente.** Las glosas
+     * de abajo salen del Diccionario Mam de COLIMAM (ALMG) salvo las seis marcadas, que
+     * salen del Manual de Normas Ortográficas del propio proyecto — el COLIMAM las imprime
+     * con la `ẍ` corrompida en `õ` y no se pueden citar de ahí sin ambigüedad.
      *
      * @var list<array{string, string}> mam, español
      */
     private const LEMAS = [
-        ['chmol', 'reunión'],
+        // Diccionario Mam, COLIMAM (ALMG).
+        ['chmol', 'araña'],
         ['b’aq', 'hueso'],
         ['tz’is', 'basura'],
         ['jal', 'mazorca'],
-        ['ch’el', 'chocoyo'],
-        ['kyaje', 'cuatro'],
-        ['tzaj', 'ocote'],
-        ['k’um', 'ayote'],
-        ['ẍiky', 'conejo'],
+        ['ch’el', 'chocoyo; perica'],
+        ['tzaj', 'pino'],
         ['xaq', 'piedra'],
         ['q’aq’', 'fuego'],
         ['tx’otx’', 'tierra'],
-        ['kyiẍ', 'pez; pescado'],
-        ['b’ib’itz', 'susurro'],
         ['jwe’', 'cinco'],
-        ['a’witz', 'cerro'],
+        ['a’witz', 'hoja'],
+        ['tx’ajol', 'lavar'],
+        ['pa’ch', 'cuache'],
+
+        // Manual de Normas Ortográficas — AprendeMam. Las seis palabras con `ẍ`.
+        ['ẍiky', 'conejo'],
+        ['kyiẍ', 'pez; pescado'],
+        ['wiẍ', 'gato'],
+        ['i’ẍ', 'elote'],
+        ['ẍoq’', 'tinaja'],
+        ['napẍ', 'nabo'],
     ];
 
     public function definition(): array
