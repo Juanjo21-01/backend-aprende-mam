@@ -22,10 +22,32 @@ use Illuminate\Validation\Rules\Password;
  */
 final class PasswordRules
 {
+    /** El mínimo, en un solo sitio: lo usan la regla y el mensaje que la explica. */
+    public const MINIMO = 8;
+
     private function __construct() {}
 
     public static function default(): Password
     {
-        return Password::min(8);
+        return Password::min(self::MINIMO);
+    }
+
+    /**
+     * El mensaje de longitud, que sin esto sale como `validation.min.string` en pantalla.
+     *
+     * El proyecto no publica los archivos de idioma de Laravel, así que **toda regla sin
+     * mensaje propio enseña su clave de traducción**. Las demás las cubre cada FormRequest
+     * una por una; esta vive acá porque el número que menciona sale de esta misma clase y
+     * porque son cinco las puertas por las que se fija una contraseña —el alta por consola,
+     * el cambio por consola, el alta desde el panel, el reseteo y el cambio de la propia—
+     * y las cinco tienen que decir lo mismo.
+     *
+     * @return array<string, string>
+     */
+    public static function messages(): array
+    {
+        return [
+            'password.min' => 'La contraseña necesita al menos '.self::MINIMO.' caracteres.',
+        ];
     }
 }

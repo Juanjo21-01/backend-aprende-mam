@@ -3,7 +3,77 @@
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/*
+   Los mismos colores que ya usan el login y el cascarón, aquí como variables de tema.
+
+   Se declaran una vez y se reasignan en el modo oscuro, así que las pantallas escriben
+   `bg-tarjeta` o `text-tenue` y nunca un `dark:` encima de cada clase. El día que haya que
+   cambiar un tono, se cambia en dos líneas y no en cuarenta archivos.
+*/
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-fondo: #fdfdfc;
+    --color-tarjeta: #ffffff;
+    --color-texto: #1b1b18;
+    --color-tenue: #706f6c;
+    --color-borde: #e3e3e0;
+    --color-acento: #1b1b18;
+    --color-acento-texto: #fdfdfc;
+    --color-error: #b42318;
+    --color-ok: #15803d;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-fondo: #0a0a0a;
+        --color-tarjeta: #161615;
+        --color-texto: #ededec;
+        --color-tenue: #a1a09a;
+        --color-borde: #3e3e3a;
+        --color-acento: #ededec;
+        --color-acento-texto: #0a0a0a;
+        --color-error: #ff7b6b;
+        --color-ok: #4ade80;
+    }
+}
+
+@layer base {
+    :root {
+        color-scheme: light dark;
+    }
+}
+
+@layer components {
+    /* Casillas de formulario y selectores. */
+    .campo {
+        @apply w-full rounded-lg border border-borde bg-fondo px-3 py-2 text-sm text-texto;
+        @apply focus:outline-2 focus:outline-offset-1 focus:outline-acento;
+    }
+
+    .etiqueta {
+        @apply mb-1.5 block text-[0.8125rem] font-medium text-texto;
+    }
+
+    .boton {
+        @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-acento px-3 py-2;
+        @apply text-sm font-medium text-acento-texto;
+        @apply disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .boton-secundario {
+        @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-borde bg-tarjeta px-3 py-2;
+        @apply text-sm font-medium text-texto;
+        @apply disabled:cursor-not-allowed disabled:opacity-50;
+    }
+
+    .tarjeta {
+        @apply rounded-xl border border-borde bg-tarjeta;
+    }
+
+    /* Temas de una entrada en la tabla. */
+    .chip {
+        @apply inline-block rounded-md border border-borde px-1.5 py-0.5 text-[0.6875rem] text-tenue;
+    }
 }

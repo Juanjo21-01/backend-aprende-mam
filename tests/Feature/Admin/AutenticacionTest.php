@@ -107,6 +107,15 @@ final class AutenticacionTest extends TestCase
         $this->assertAuthenticatedAs($otra);
     }
 
+    /**
+     * El cascarón ya no pinta el nombre ni el rol: eso lo dibuja React con lo que devuelve
+     * `GET /yo`, y de eso da fe `test_la_api_del_panel_dice_quien_entro`.
+     *
+     * Lo que sí tiene que traer esta vista son las dos cosas que el panel no se puede dar a
+     * sí mismo, y sin las cuales falla de una forma que no señala la causa: el contenedor
+     * donde monta —sin él la página queda en blanco, sin error— y el token CSRF —sin él la
+     * primera escritura responde 419.
+     */
     public function test_el_panel_se_ve_con_sesion(): void
     {
         $usuario = User::factory()->administrador()->create(['name' => 'María López']);
@@ -115,8 +124,8 @@ final class AutenticacionTest extends TestCase
             ->actingAs($usuario)
             ->get('/admin')
             ->assertOk()
-            ->assertSee('María López')
-            ->assertSee('Administrador');
+            ->assertSee('id="panel"', escape: false)
+            ->assertSee('name="csrf-token"', escape: false);
     }
 
     public function test_se_sale_de_la_sesion(): void

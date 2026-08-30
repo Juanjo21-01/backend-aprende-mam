@@ -41,6 +41,7 @@ final class ResetPasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
+            ...PasswordRules::messages(),
             'password.required' => 'Falta la contraseña nueva.',
             'password.confirmed' => 'Las dos contraseñas no coinciden.',
         ];

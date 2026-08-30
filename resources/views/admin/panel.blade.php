@@ -1,10 +1,13 @@
 {{--
     Cascarón del panel.
 
-    Aquí es donde monta la interfaz React de la siguiente tanda. Por ahora muestra quién
-    entró y con qué rol, que es lo que hace verificable de punta a punta la capa de
-    autenticación: si esta página se ve, la sesión funciona y el CRUD de `/api/v1/admin`
-    responde con esa misma cookie.
+    Aquí no hay interfaz: la dibuja entera React desde `resources/js/app.tsx`, encabezado y
+    botón de salir incluidos. Esta vista solo aporta las tres cosas que el JavaScript no se
+    puede dar a sí mismo: la sesión ya comprobada por el middleware, el token CSRF para las
+    escrituras, y un contenedor donde montar.
+
+    El `<noscript>` no es cortesía. Esta pantalla solo se alcanza con sesión abierta, así que
+    quien la vea en blanco ya entró bien y merece saber por qué no ve nada.
 --}}
 <!DOCTYPE html>
 <html lang="es">
@@ -13,41 +16,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
 
-    {{-- Lo lee el cliente HTTP de React para las peticiones a /api/v1/admin. --}}
+    {{-- Lo lee el cliente HTTP del panel para las escrituras a /api/v1/admin. --}}
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>Panel · {{ config('app.name') }}</title>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    {{--
+        Va antes de @vite y no es opcional: instala el preámbulo de Fast Refresh que
+        @vitejs/plugin-react espera encontrar ya puesto cuando carga el primer módulo. Sin
+        él, `npm run dev` muere con «can't detect preamble» señalando un archivo cualquiera
+        del panel, que no tiene nada que ver.
+
+        Con los assets compilados no hace nada —la directiva se calla si no hay servidor de
+        Vite—, así que el fallo solo aparece en desarrollo.
+    --}}
+    @viteReactRefresh
+    @vite(['resources/css/app.css', 'resources/js/app.tsx'])
 </head>
-<body class="min-h-screen bg-white text-[#1b1b18] antialiased dark:bg-[#0a0a0a] dark:text-[#ededec]">
-    <header class="border-b border-[#e3e3e0] dark:border-[#3e3e3a]">
-        <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
-            <div>
-                <p class="font-semibold">{{ config('app.name') }}</p>
-                <p class="text-sm text-[#706f6c] dark:text-[#a1a09a]">
-                    {{ auth()->user()->name }} · {{ auth()->user()->rol->label() }}
-                </p>
-            </div>
+<body class="min-h-screen bg-fondo text-texto antialiased">
+    <div id="panel"></div>
 
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button type="submit"
-                        class="rounded-md border border-[#e3e3e0] px-3 py-1.5 text-sm dark:border-[#3e3e3a]">
-                    Salir
-                </button>
-            </form>
-        </div>
-    </header>
-
-    {{-- Punto de montaje de la interfaz React. --}}
-    <main id="panel" class="mx-auto max-w-5xl px-6 py-10">
-        <h1 class="text-lg font-semibold">Panel en construcción</h1>
-        <p class="mt-2 max-w-prose text-sm text-[#706f6c] dark:text-[#a1a09a]">
-            La interfaz de administración se monta en este contenedor. El backend ya responde
-            en <code>/api/v1/admin</code> con esta misma sesión: entradas, categorías, fuentes
-            y el catálogo de clases de palabra.
+    <noscript>
+        <p style="padding: 1.5rem; font-family: system-ui, sans-serif;">
+            El panel de administración necesita JavaScript. El sitio público de estudiantes y
+            docentes no: eso se sirve como páginas estáticas desde otro dominio.
         </p>
-    </main>
+    </noscript>
 </body>
 </html>

@@ -93,6 +93,7 @@ final class UserRequest extends FormRequest
     public function messages(): array
     {
         return [
+            ...PasswordRules::messages(),
             'required' => 'Falta :attribute.',
             'email.email' => 'El correo no tiene un formato válido.',
             'email.unique' => 'Ya existe una cuenta con ese correo.',

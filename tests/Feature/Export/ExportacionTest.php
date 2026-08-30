@@ -151,6 +151,26 @@ final class ExportacionTest extends TestCase
         $this->assertSame('animales', $datos['categorias'][0]['slug']);
     }
 
+    /**
+     * La jerarquía también, y por el mismo motivo: fuera de la exportación el `id` de una
+     * categoría no existe, así que un `padre` numérico no se puede resolver contra nada y
+     * el sitio no puede reconstruir el árbol de temas.
+     *
+     * Hace falta un tema anidado para que se note. Con los siete de primer nivel que hay
+     * hoy, exportar el id o el slug da igual, y por eso el fallo vivió sin que nadie lo
+     * viera.
+     */
+    public function test_la_jerarquia_de_temas_viaja_por_slug(): void
+    {
+        $padre = Categoria::factory()->create(['slug' => 'la-naturaleza', 'orden' => 1]);
+        Categoria::factory()->hijaDe($padre)->create(['slug' => 'plantas', 'orden' => 2]);
+
+        $categorias = collect($this->exportar()['categorias'])->keyBy('slug');
+
+        $this->assertNull($categorias['la-naturaleza']['padre']);
+        $this->assertSame('la-naturaleza', $categorias['plantas']['padre']);
+    }
+
     public function test_la_version_sube_al_guardar_contenido(): void
     {
         $antes = VersionContenido::numeroActual();

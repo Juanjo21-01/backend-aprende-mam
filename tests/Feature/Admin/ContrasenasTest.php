@@ -83,6 +83,13 @@ final class ContrasenasTest extends TestCase
             ->assertJsonValidationErrors('password');
     }
 
+    /**
+     * Se comprueba el **mensaje**, no solo que haya error.
+     *
+     * El proyecto no publica los archivos de idioma de Laravel, así que una regla sin
+     * mensaje propio no falla: enseña su clave de traducción. Esta versión del test pasaba
+     * en verde mientras el panel mostraba «validation.min.string» a la cara del docente.
+     */
     public function test_la_contrasena_nueva_tiene_un_minimo(): void
     {
         $this->actingAs(User::factory()->create())
@@ -92,7 +99,25 @@ final class ContrasenasTest extends TestCase
                 'password_confirmation' => 'corta',
             ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('password');
+            ->assertJsonValidationErrors([
+                'password' => 'La contraseña necesita al menos 8 caracteres.',
+            ]);
+    }
+
+    /** La misma exigencia por la otra puerta: el reseteo que hace un administrador. */
+    public function test_el_reseteo_tambien_explica_el_minimo(): void
+    {
+        $editor = User::factory()->editor()->create();
+
+        $this->actingAs(User::factory()->administrador()->create())
+            ->patchJson(route('admin.usuarios.contrasena', $editor), [
+                'password' => 'corta',
+                'password_confirmation' => 'corta',
+            ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors([
+                'password' => 'La contraseña necesita al menos 8 caracteres.',
+            ]);
     }
 
     // --- Reseteo por el administrador -----------------------------------------------

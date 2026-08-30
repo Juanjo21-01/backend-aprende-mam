@@ -69,7 +69,10 @@ class ChangeUserPassword extends Command
         $validador = Validator::make(
             ['password' => $clave, 'password_confirmation' => $confirmacion],
             ['password' => ['required', 'confirmed', PasswordRules::default()]],
-            ['password.confirmed' => 'Las dos contraseñas no coinciden.']
+            [
+                ...PasswordRules::messages(),
+                'password.confirmed' => 'Las dos contraseñas no coinciden.',
+            ]
         );
 
         if ($validador->fails()) {

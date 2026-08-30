@@ -39,6 +39,7 @@ final class UpdateOwnPasswordRequest extends FormRequest
     public function messages(): array
     {
         return [
+            ...PasswordRules::messages(),
             'current_password.required' => 'Falta tu contraseña actual.',
             'current_password.current_password' => 'La contraseña actual no es correcta.',
             'password.required' => 'Falta la contraseña nueva.',

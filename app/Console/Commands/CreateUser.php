@@ -84,6 +84,7 @@ class CreateUser extends Command
             'rol' => ['required', 'string', 'in:'.implode(',', array_column(UserRole::cases(), 'value'))],
             'password' => ['required', 'confirmed', PasswordRules::default()],
         ], [
+            ...PasswordRules::messages(),
             'email.unique' => 'Ya existe una cuenta con ese correo.',
             'password.confirmed' => 'Las dos contraseñas no coinciden.',
             'rol.in' => 'El rol debe ser «administrador» o «editor».',

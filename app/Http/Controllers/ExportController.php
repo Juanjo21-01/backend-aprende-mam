@@ -71,20 +71,38 @@ final class ExportController extends Controller
     }
 
     /**
+     * El catálogo de temas, con la jerarquía en la misma moneda que el resto.
+     *
+     * `padre` sale como **slug**, no como el `id` de la fila. Fuera de aquí el `id` de una
+     * categoría no existe: las entradas traen sus temas por slug y el catálogo tampoco
+     * exporta el suyo, así que un `padre` numérico no se puede resolver contra nada y la
+     * jerarquía queda irreconstruible en el sitio. Da igual mientras todos los temas sean
+     * de primer nivel —y por eso pasó desapercibido—, pero rompe en cuanto haya uno anidado.
+     *
+     * El slug del padre se busca en la colección ya cargada y no con la relación `padre`:
+     * son decenas de temas y vienen todos, así que cargarla sería una consulta por fila
+     * para releer algo que ya está en memoria.
+     *
      * @return list<array<string, mixed>>
      */
     private function categorias(): array
     {
-        return Categoria::query()
+        $categorias = Categoria::query()
             ->enOrdenDelPanel()
-            ->get(['id', 'nombre_es', 'nombre_mam', 'slug', 'icono', 'orden', 'padre_id'])
+            ->get(['id', 'nombre_es', 'nombre_mam', 'slug', 'icono', 'orden', 'padre_id']);
+
+        $slugPorId = $categorias->pluck('slug', 'id');
+
+        return $categorias
             ->map(fn (Categoria $categoria): array => [
                 'slug' => $categoria->slug,
                 'nombre_es' => $categoria->nombre_es,
                 'nombre_mam' => $categoria->nombre_mam,
                 'icono' => $categoria->icono,
                 'orden' => $categoria->orden,
-                'padre' => $categoria->padre_id,
+                'padre' => $categoria->padre_id === null
+                    ? null
+                    : $slugPorId->get($categoria->padre_id),
             ])
             ->all();
     }
