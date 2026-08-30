@@ -26,6 +26,14 @@ final class EntradaController extends Controller
     /** Relaciones que el panel siempre necesita para pintar una fila o un formulario. */
     private const RELACIONES = ['categoriaGramatical', 'fuente', 'categorias', 'creador', 'revisor'];
 
+    /**
+     * El valor que pide «las que no tienen ninguna», en los filtros de tema y de fuente.
+     *
+     * Va como palabra y no como un id imposible porque no es un valor más de la lista: es
+     * una pregunta distinta —«¿cuáles me faltan?»— y así se lee en la URL.
+     */
+    private const SIN_ASIGNAR = 'ninguna';
+
     #[Authorize('viewAny', Entrada::class)]
     public function index(Request $request): AnonymousResourceCollection
     {
@@ -44,10 +52,31 @@ final class EntradaController extends Controller
             )
             ->when(
                 $request->filled('categoria'),
-                fn ($query) => $query->whereHas(
-                    'categorias',
-                    fn ($tema) => $tema->whereKey($request->integer('categoria'))
-                )
+                function ($query) use ($request): void {
+                    $valor = (string) $request->string('categoria');
+
+                    // «Sin tema» no es un tema más. El Manual de Normas pide que toda
+                    // entrada lleve al menos uno antes de publicarse, y entre seis mil no
+                    // hay otra forma de encontrar las que faltan.
+                    $valor === self::SIN_ASIGNAR
+                        ? $query->whereDoesntHave('categorias')
+                        : $query->whereHas(
+                            'categorias',
+                            fn ($tema) => $tema->whereKey((int) $valor)
+                        );
+                }
+            )
+            ->when(
+                $request->filled('fuente'),
+                function ($query) use ($request): void {
+                    $valor = (string) $request->string('fuente');
+
+                    // Filtrar por fuente es cómo se revisa lo que se acaba de transcribir:
+                    // se carga de un libro por vez, y esto devuelve justo esa tanda.
+                    $valor === self::SIN_ASIGNAR
+                        ? $query->whereNull('fuente_id')
+                        : $query->where('fuente_id', (int) $valor);
+                }
             )
             ->enOrdenMam()
             ->paginate(perPage: min($request->integer('por_pagina', 50), 200))

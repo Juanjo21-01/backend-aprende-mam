@@ -22,6 +22,7 @@ import type {
     FiltrosEntradas,
     Fuente,
     Pagina,
+    EstadoPublicacion,
     Sesion,
     Usuario,
 } from '../tipos';
@@ -50,6 +51,22 @@ export const borrarEntrada = (id: number): Promise<void> => api.borrar(`/entrada
  */
 export const marcarRevision = async (id: number, revisado: boolean): Promise<Entrada> =>
     (await api.modificar<{ data: Entrada }>(`/entradas/${id}/revision`, { revisado })).data;
+
+/**
+ * La misma firma, sobre una tanda. El tope del servidor son 200, que es también el máximo
+ * de `por_pagina`: se firma lo que se está viendo.
+ *
+ * Devuelve cuántas cambiaron de verdad, que no siempre es cuántas se mandaron: las que ya
+ * estaban así no se tocan.
+ */
+export const marcarRevisionEnLote = (
+    ids: number[],
+    revisado: boolean,
+): Promise<{ recibidas: number; actualizadas: number }> =>
+    api.modificar<{ recibidas: number; actualizadas: number }>('/entradas/revisiones', {
+        ids,
+        revisado,
+    });
 
 export const listarCategorias = async (): Promise<Categoria[]> =>
     (await api.obtener<Coleccion<Categoria>>('/categorias')).data;
@@ -134,3 +151,7 @@ export const cambiarContrasenaPropia = (
         password: nueva,
         password_confirmation: confirmacion,
     });
+
+/** Lo leen los dos roles: quien carga vocabulario también quiere saber si salió. */
+export const estadoDePublicacion = (): Promise<EstadoPublicacion> =>
+    api.obtener<EstadoPublicacion>('/publicacion');

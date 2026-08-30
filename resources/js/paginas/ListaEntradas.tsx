@@ -1,7 +1,7 @@
 /**
  * Listado de entradas: buscar, filtrar, revisar y borrar.
  *
- * Dos cosas que no son cosméticas:
+ * Tres cosas que no son cosméticas:
  *
  * - **Los filtros viven en la URL.** Recargar, volver atrás o dejar el navegador abierto en
  *   la página 7 de «sin revisar» sigue funcionando. Revisando seis mil entradas eso deja de
@@ -9,15 +9,23 @@
  * - **El orden lo pone el servidor** (`enOrdenMam`), y aquí no se reordena nada. El orden
  *   alfabético del Mam no es el del castellano, y ordenar en el cliente por `mam` daría un
  *   resultado equivocado que además parecería correcto.
+ * - **La selección se limpia al cambiar de filtro o de página.** Firmar la revisión de
+ *   entradas que ya no se están viendo es exactamente lo que no debe poder pasar.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router";
 
-import { borrarEntrada, listarEntradas, marcarRevision } from "../api/recursos";
+import {
+    borrarEntrada,
+    listarEntradas,
+    marcarRevision,
+    marcarRevisionEnLote,
+} from "../api/recursos";
 import { Aviso, Cargando, Vacio } from "../componentes/Estados";
 import { usePanel } from "../panel";
-import type { Entrada, Pagina } from "../tipos";
+import type { Entrada, FiltrosEntradas, Pagina } from "../tipos";
+import { SIN_ASIGNAR } from "../tipos";
 
 const POR_PAGINA = [25, 50, 100] as const;
 
@@ -25,13 +33,23 @@ function mensajeDe(fallo: unknown): string {
     return fallo instanceof Error ? fallo.message : "Algo salió mal.";
 }
 
+/** Un filtro de la URL, tal como lo espera la API: sin valor, la palabra centinela, o un id. */
+function comoFiltro(valor: string): FiltrosEntradas["categoria"] {
+    if (valor === "") {
+        return undefined;
+    }
+
+    return valor === SIN_ASIGNAR ? SIN_ASIGNAR : Number(valor);
+}
+
 export function ListaEntradas() {
-    const { sesion, categorias } = usePanel();
+    const { sesion, categorias, fuentes } = usePanel();
     const [params, setParams] = useSearchParams();
 
     const buscar = params.get("buscar") ?? "";
     const revisado = params.get("revisado") ?? "";
     const categoria = params.get("categoria") ?? "";
+    const fuente = params.get("fuente") ?? "";
     const porPagina = params.get("por_pagina") ?? "50";
     const pagina = Number(params.get("page") ?? "1");
 
@@ -41,7 +59,14 @@ export function ListaEntradas() {
     const [resultado, setResultado] = useState<Pagina<Entrada> | null>(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [hecho, setHecho] = useState<string | null>(null);
     const [ocupada, setOcupada] = useState<number | null>(null);
+    const [seleccion, setSeleccion] = useState<number[]>([]);
+    const [enLote, setEnLote] = useState(false);
+
+    const casilleroDeTodas = useRef<HTMLInputElement>(null);
+
+    const claveDeFiltros = params.toString();
 
     const cambiarFiltro = useCallback(
         (clave: string, valor: string): void => {
@@ -72,7 +97,8 @@ export function ListaEntradas() {
                 await listarEntradas({
                     buscar: buscar === "" ? undefined : buscar,
                     revisado: revisado === "" ? undefined : revisado === "1",
-                    categoria: categoria === "" ? undefined : Number(categoria),
+                    categoria: comoFiltro(categoria),
+                    fuente: comoFiltro(fuente),
                     por_pagina: Number(porPagina),
                     page: pagina,
                 }),
@@ -83,11 +109,17 @@ export function ListaEntradas() {
         } finally {
             setCargando(false);
         }
-    }, [buscar, revisado, categoria, porPagina, pagina]);
+    }, [buscar, revisado, categoria, fuente, porPagina, pagina]);
 
     useEffect(() => {
         void cargar();
     }, [cargar]);
+
+    // Cambió lo que se está viendo: lo seleccionado antes ya no está en pantalla.
+    useEffect(() => {
+        setSeleccion([]);
+        setHecho(null);
+    }, [claveDeFiltros]);
 
     // La casilla de búsqueda llega a la URL con retardo; el efecto de abajo recoge el
     // camino inverso, cuando `buscar` cambia por otra vía (volver atrás, por ejemplo).
@@ -96,10 +128,7 @@ export function ListaEntradas() {
             return;
         }
 
-        const temporizador = setTimeout(
-            () => cambiarFiltro("buscar", texto),
-            300,
-        );
+        const temporizador = setTimeout(() => cambiarFiltro("buscar", texto), 300);
 
         return () => clearTimeout(temporizador);
     }, [texto, buscar, cambiarFiltro]);
@@ -108,16 +137,34 @@ export function ListaEntradas() {
         setTexto(buscar);
     }, [buscar]);
 
+    const visibles = resultado?.data ?? [];
+
+    // «Algunas, no todas» no se puede expresar con un atributo: hay que ponerlo a mano.
+    useEffect(() => {
+        if (casilleroDeTodas.current !== null) {
+            casilleroDeTodas.current.indeterminate =
+                seleccion.length > 0 && seleccion.length < visibles.length;
+        }
+    }, [seleccion, visibles.length]);
+
     function reemplazarFila(entrada: Entrada): void {
         setResultado((previo) =>
             previo === null
                 ? previo
                 : {
-                    ...previo,
-                    data: previo.data.map((fila) =>
-                        fila.id === entrada.id ? entrada : fila,
-                    ),
-                },
+                      ...previo,
+                      data: previo.data.map((fila) =>
+                          fila.id === entrada.id ? entrada : fila,
+                      ),
+                  },
+        );
+    }
+
+    function alternarSeleccion(id: number): void {
+        setSeleccion((previa) =>
+            previa.includes(id)
+                ? previa.filter((otro) => otro !== id)
+                : [...previa, id],
         );
     }
 
@@ -134,12 +181,41 @@ export function ListaEntradas() {
         }
     }
 
+    async function revisarSeleccion(revisada: boolean): Promise<void> {
+        setEnLote(true);
+        setError(null);
+        setHecho(null);
+
+        try {
+            const { recibidas, actualizadas } = await marcarRevisionEnLote(
+                seleccion,
+                revisada,
+            );
+
+            const comoQuedan = revisada ? "revisadas" : "sin revisar";
+
+            // El caso de no cambiar nada merece su propia frase: refirmar una página ya
+            // firmada es normal, y «se marcaron 0 entradas» se lee como si hubiera fallado.
+            const mensaje =
+                actualizadas === 0
+                    ? `Las ${recibidas} ya estaban ${comoQuedan}: no cambió ninguna.`
+                    : `${actualizadas} entrada(s) quedaron ${comoQuedan}.` +
+                      (recibidas > actualizadas
+                          ? ` Las otras ${recibidas - actualizadas} ya estaban así.`
+                          : "");
+
+            setSeleccion([]);
+            await cargar();
+            setHecho(mensaje);
+        } catch (fallo) {
+            setError(mensajeDe(fallo));
+        } finally {
+            setEnLote(false);
+        }
+    }
+
     async function borrar(entrada: Entrada): Promise<void> {
-        if (
-            !window.confirm(
-                `¿Borrar «${entrada.mam}»? Esto no se puede deshacer.`,
-            )
-        ) {
+        if (!window.confirm(`¿Borrar «${entrada.mam}»? Esto no se puede deshacer.`)) {
             return;
         }
 
@@ -157,7 +233,12 @@ export function ListaEntradas() {
     }
 
     const meta = resultado?.meta;
-    const sinFiltros = buscar === "" && revisado === "" && categoria === "";
+    const sinFiltros =
+        buscar === "" && revisado === "" && categoria === "" && fuente === "";
+
+    // Solo el validador lingüístico firma revisiones, así que a un editor no se le ofrecen
+    // las casillas: no tendría qué hacer con ellas.
+    const puedeFirmar = sesion.es_administrador;
 
     return (
         <div className="grid gap-5">
@@ -189,8 +270,8 @@ export function ListaEntradas() {
                         autoComplete="off"
                     />
                     <p className="mt-1 text-xs text-tenue">
-                        Da igual el saltillo y las mayúsculas: la búsqueda usa
-                        la misma clave que calculó el sistema al guardar.
+                        Da igual el saltillo y las mayúsculas: la búsqueda usa la misma clave
+                        que calculó el sistema al guardar.
                     </p>
                 </div>
 
@@ -225,12 +306,40 @@ export function ListaEntradas() {
                         }
                     >
                         <option value="">Todos</option>
+                        {/* Antes de publicar, toda entrada debería llevar tema. Esta opción
+                            es la única forma de encontrar las que no lo tienen. */}
+                        <option value={SIN_ASIGNAR}>Sin tema</option>
                         {categorias.map((tema) => (
                             <option key={tema.id} value={tema.id}>
                                 {tema.nombre_es}
                             </option>
                         ))}
                     </select>
+                </div>
+
+                <div className="sm:col-span-2">
+                    <label className="etiqueta" htmlFor="fuente">
+                        Fuente
+                    </label>
+                    <select
+                        id="fuente"
+                        className="campo"
+                        value={fuente}
+                        onChange={(evento) =>
+                            cambiarFiltro("fuente", evento.target.value)
+                        }
+                    >
+                        <option value="">Todas</option>
+                        <option value={SIN_ASIGNAR}>Sin fuente</option>
+                        {fuentes.map((libro) => (
+                            <option key={libro.id} value={libro.id}>
+                                {libro.titulo}
+                            </option>
+                        ))}
+                    </select>
+                    <p className="mt-1 text-xs text-tenue">
+                        Para revisar de un tirón lo que acabás de transcribir de un libro.
+                    </p>
                 </div>
             </div>
 
@@ -250,10 +359,50 @@ export function ListaEntradas() {
                 </Aviso>
             )}
 
+            {hecho !== null && (
+                <div className="tarjeta px-4 py-3 text-sm text-ok" role="status">
+                    {hecho}
+                </div>
+            )}
+
+            {puedeFirmar && seleccion.length > 0 && (
+                <div className="tarjeta flex flex-wrap items-center gap-3 px-4 py-3">
+                    <p className="text-sm">
+                        {seleccion.length} seleccionada(s)
+                    </p>
+
+                    <button
+                        type="button"
+                        className="boton"
+                        disabled={enLote}
+                        onClick={() => void revisarSeleccion(true)}
+                    >
+                        {enLote ? "Guardando…" : "Marcar como revisadas"}
+                    </button>
+
+                    <button
+                        type="button"
+                        className="boton-secundario"
+                        disabled={enLote}
+                        onClick={() => void revisarSeleccion(false)}
+                    >
+                        Quitar la revisión
+                    </button>
+
+                    <button
+                        type="button"
+                        className="text-sm text-tenue underline-offset-2 hover:underline"
+                        onClick={() => setSeleccion([])}
+                    >
+                        Limpiar
+                    </button>
+                </div>
+            )}
+
             <div className="tarjeta overflow-x-auto">
                 {cargando && resultado === null ? (
                     <Cargando />
-                ) : resultado === null || resultado.data.length === 0 ? (
+                ) : visibles.length === 0 ? (
                     <Vacio>
                         {sinFiltros
                             ? "Todavía no hay entradas. La primera se carga con «Nueva entrada»."
@@ -263,26 +412,53 @@ export function ListaEntradas() {
                     <table className="w-full border-collapse text-sm">
                         <thead>
                             <tr className="border-b border-borde text-left text-xs text-tenue">
+                                {puedeFirmar && (
+                                    <th className="w-8 px-4 py-2">
+                                        <input
+                                            ref={casilleroDeTodas}
+                                            type="checkbox"
+                                            aria-label="Seleccionar todas las de esta página"
+                                            checked={
+                                                seleccion.length === visibles.length &&
+                                                visibles.length > 0
+                                            }
+                                            onChange={(evento) =>
+                                                setSeleccion(
+                                                    evento.target.checked
+                                                        ? visibles.map((fila) => fila.id)
+                                                        : [],
+                                                )
+                                            }
+                                        />
+                                    </th>
+                                )}
                                 <th className="px-4 py-2 font-medium">Mam</th>
-                                <th className="px-4 py-2 font-medium">
-                                    Castellano
-                                </th>
+                                <th className="px-4 py-2 font-medium">Castellano</th>
                                 <th className="px-4 py-2 font-medium">Clase</th>
                                 <th className="px-4 py-2 font-medium">Temas</th>
-                                <th className="px-4 py-2 font-medium">
-                                    Revisión
-                                </th>
-                                <th className="px-4 py-2 text-right font-medium">
-                                    Acciones
-                                </th>
+                                <th className="px-4 py-2 font-medium">Revisión</th>
+                                <th className="px-4 py-2 text-right font-medium">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {resultado.data.map((entrada) => (
+                            {visibles.map((entrada) => (
                                 <tr
                                     key={entrada.id}
                                     className="border-b border-borde last:border-0"
                                 >
+                                    {puedeFirmar && (
+                                        <td className="px-4 py-2.5 align-top">
+                                            <input
+                                                type="checkbox"
+                                                aria-label={`Seleccionar ${entrada.mam}`}
+                                                checked={seleccion.includes(entrada.id)}
+                                                onChange={() =>
+                                                    alternarSeleccion(entrada.id)
+                                                }
+                                            />
+                                        </td>
+                                    )}
+
                                     <td className="px-4 py-2.5 align-top">
                                         <Link
                                             to={`/entradas/${entrada.id}`}
@@ -299,53 +475,41 @@ export function ListaEntradas() {
                                     <td className="px-4 py-2.5 align-top text-tenue">
                                         <span
                                             title={
-                                                entrada.categoria_gramatical
-                                                    ?.nombre ?? undefined
+                                                entrada.categoria_gramatical?.nombre ??
+                                                undefined
                                             }
                                         >
-                                            {entrada.categoria_gramatical
-                                                ?.abreviatura ?? "—"}
+                                            {entrada.categoria_gramatical?.abreviatura ??
+                                                "—"}
                                         </span>
                                     </td>
 
                                     <td className="px-4 py-2.5 align-top">
                                         <span className="flex flex-wrap gap-1">
                                             {entrada.categorias !== undefined &&
-                                                entrada.categorias.length > 0 ? (
-                                                entrada.categorias.map(
-                                                    (tema) => (
-                                                        <span
-                                                            key={tema.id}
-                                                            className="chip"
-                                                        >
-                                                            {tema.nombre_es}
-                                                        </span>
-                                                    ),
-                                                )
+                                            entrada.categorias.length > 0 ? (
+                                                entrada.categorias.map((tema) => (
+                                                    <span key={tema.id} className="chip">
+                                                        {tema.nombre_es}
+                                                    </span>
+                                                ))
                                             ) : (
-                                                <span className="text-tenue">
-                                                    —
-                                                </span>
+                                                <span className="text-tenue">—</span>
                                             )}
                                         </span>
                                     </td>
 
                                     <td className="px-4 py-2.5 align-top">
-                                        {sesion.es_administrador ? (
+                                        {puedeFirmar ? (
                                             <button
                                                 type="button"
-                                                className={`text-xs underline-offset-2 hover:underline disabled:opacity-50 ${entrada.revisado
+                                                className={`text-xs underline-offset-2 hover:underline disabled:opacity-50 ${
+                                                    entrada.revisado
                                                         ? "text-ok"
                                                         : "text-tenue"
-                                                    }`}
-                                                disabled={
-                                                    ocupada === entrada.id
-                                                }
-                                                onClick={() =>
-                                                    void alternarRevision(
-                                                        entrada,
-                                                    )
-                                                }
+                                                }`}
+                                                disabled={ocupada === entrada.id}
+                                                onClick={() => void alternarRevision(entrada)}
                                                 title={
                                                     entrada.revisado
                                                         ? "Quitar la revisión la saca de la publicación"
@@ -379,12 +543,8 @@ export function ListaEntradas() {
                                             <button
                                                 type="button"
                                                 className="ml-3 text-xs text-error underline-offset-2 hover:underline disabled:opacity-50"
-                                                disabled={
-                                                    ocupada === entrada.id
-                                                }
-                                                onClick={() =>
-                                                    void borrar(entrada)
-                                                }
+                                                disabled={ocupada === entrada.id}
+                                                onClick={() => void borrar(entrada)}
                                             >
                                                 Borrar
                                             </button>
@@ -411,10 +571,7 @@ export function ListaEntradas() {
                                 className="campo w-auto py-1"
                                 value={porPagina}
                                 onChange={(evento) =>
-                                    cambiarFiltro(
-                                        "por_pagina",
-                                        evento.target.value,
-                                    )
+                                    cambiarFiltro("por_pagina", evento.target.value)
                                 }
                             >
                                 {POR_PAGINA.map((cantidad) => (
@@ -430,10 +587,7 @@ export function ListaEntradas() {
                             className="boton-secundario"
                             disabled={meta.current_page <= 1}
                             onClick={() =>
-                                cambiarFiltro(
-                                    "page",
-                                    String(meta.current_page - 1),
-                                )
+                                cambiarFiltro("page", String(meta.current_page - 1))
                             }
                         >
                             Anterior
@@ -448,10 +602,7 @@ export function ListaEntradas() {
                             className="boton-secundario"
                             disabled={meta.current_page >= meta.last_page}
                             onClick={() =>
-                                cambiarFiltro(
-                                    "page",
-                                    String(meta.current_page + 1),
-                                )
+                                cambiarFiltro("page", String(meta.current_page + 1))
                             }
                         >
                             Siguiente

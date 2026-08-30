@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Support\Publishing;
 
+use App\Models\VersionContenido;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -52,6 +53,11 @@ final class DeployHook
                 $version
             ));
         }
+
+        // Después de que el proveedor aceptó, nunca antes: anotarlo al despachar diría
+        // que está publicado algo que quizá falló, y el panel mostraría «al día» mientras
+        // el sitio sigue sirviendo contenido viejo.
+        VersionContenido::marcarPublicada($version);
 
         Log::info("Publicación disparada: versión {$version}.");
     }

@@ -101,14 +101,24 @@ export interface DatosEntrada {
     categorias: number[];
 }
 
-/** Filtros de `GET /entradas`. Los que van vacíos no se mandan. */
+/**
+ * Filtros de `GET /entradas`. Los que van vacíos no se mandan.
+ *
+ * `categoria` y `fuente` aceptan un id o la palabra `ninguna`, que pide justo las que no
+ * tienen. No es un valor más de la lista: es otra pregunta —«¿cuáles me faltan?»— y en el
+ * caso de los temas es la que resuelve la lista de verificación previa a publicar.
+ */
 export interface FiltrosEntradas {
     buscar?: string;
     revisado?: boolean;
-    categoria?: number;
+    categoria?: number | typeof SIN_ASIGNAR;
+    fuente?: number | typeof SIN_ASIGNAR;
     por_pagina?: number;
     page?: number;
 }
+
+/** El valor que pide «las que no tienen ninguna». Lo entiende `EntradaController`. */
+export const SIN_ASIGNAR = 'ninguna';
 
 /** Colección paginada de Laravel. */
 export interface Pagina<T> {
@@ -183,4 +193,22 @@ export interface DatosUsuario {
     rol: Rol;
     password?: string;
     password_confirmation?: string;
+}
+
+/**
+ * Si lo guardado ya salió al sitio público.
+ *
+ * `version_publicada` en `null` significa «nunca se publicó», que es el estado real de una
+ * instalación recién desplegada y no un dato que falte. `habilitada` en `false` quiere decir
+ * que no hay deploy hook configurado: no se va a publicar sola por más que se espere.
+ */
+export interface EstadoPublicacion {
+    version: number;
+    version_publicada: number | null;
+    publicado_en: string | null;
+    sin_publicar: boolean;
+    habilitada: boolean;
+    retardo_segundos: number;
+    /** Cuándo debería dispararse la publicación pendiente. Nulo si no hay ninguna. */
+    programada_para: string | null;
 }

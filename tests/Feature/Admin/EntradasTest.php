@@ -152,6 +152,59 @@ final class EntradasTest extends TestCase
             ->assertJsonPath('data.0.mam', 'chmol');
     }
 
+    /**
+     * Filtrar por fuente es cómo se revisa lo que se acaba de transcribir: se carga de un
+     * libro por vez y esto devuelve justo esa tanda.
+     */
+    public function test_filtra_por_fuente(): void
+    {
+        $colimam = Fuente::factory()->create(['titulo' => 'Diccionario COLIMAM']);
+        $otra = Fuente::factory()->create(['titulo' => 'Gramática pedagógica']);
+
+        Entrada::factory()->conLema('chmol')->create(['fuente_id' => $colimam->id]);
+        Entrada::factory()->conLema('b’aq')->create(['fuente_id' => $otra->id]);
+
+        $this->actingAs($this->editor())
+            ->getJson(route('admin.entradas.index', ['fuente' => $colimam->id]))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.mam', 'chmol');
+    }
+
+    public function test_filtra_las_que_no_tienen_fuente(): void
+    {
+        $fuente = Fuente::factory()->create();
+
+        Entrada::factory()->conLema('chmol')->create(['fuente_id' => $fuente->id]);
+        Entrada::factory()->conLema('b’aq')->create(['fuente_id' => null]);
+
+        $this->actingAs($this->editor())
+            ->getJson(route('admin.entradas.index', ['fuente' => 'ninguna']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.mam', 'b’aq');
+    }
+
+    /**
+     * El Manual de Normas pide que toda entrada lleve al menos un tema antes de publicarse.
+     * Sin este filtro, entre seis mil no hay forma de encontrar las que faltan.
+     */
+    public function test_filtra_las_que_no_tienen_tema(): void
+    {
+        $animales = Categoria::factory()->create(['slug' => 'animales']);
+
+        $conTema = Entrada::factory()->conLema('chmol')->create();
+        $conTema->categorias()->sync([$animales->id]);
+
+        Entrada::factory()->conLema('b’aq')->create();
+
+        $this->actingAs($this->editor())
+            ->getJson(route('admin.entradas.index', ['categoria' => 'ninguna']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.mam', 'b’aq');
+    }
+
     public function test_asigna_temas_clase_de_palabra_y_fuente(): void
     {
         $animales = Categoria::factory()->create(['slug' => 'animales']);

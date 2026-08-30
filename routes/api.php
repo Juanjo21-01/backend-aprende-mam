@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\CurrentUserController;
 use App\Http\Controllers\Admin\CurrentUserPasswordController;
 use App\Http\Controllers\Admin\EntradaController;
 use App\Http\Controllers\Admin\FuenteController;
+use App\Http\Controllers\Admin\PublicacionController;
 use App\Http\Controllers\Admin\RevisionEntradaController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
@@ -55,6 +56,13 @@ Route::prefix('v1')->group(function (): void {
         Route::patch('usuarios/{usuario}/estado', [UserStatusController::class, 'update'])
             ->name('usuarios.estado');
 
+        // **Antes del `apiResource`, y no da igual.** `entradas/{entrada}` casa también con
+        // `entradas/revisiones`, y el enrutador se queda con la primera que coincida. Si
+        // esta línea baja de sitio, el lote responde 404 buscando una entrada que se
+        // llamara «revisiones».
+        Route::patch('entradas/revisiones', [RevisionEntradaController::class, 'updateMany'])
+            ->name('entradas.revisiones');
+
         Route::apiResource('entradas', EntradaController::class);
 
         // Fuera del recurso a propósito: no es una edición más, es la firma del validador
@@ -68,6 +76,10 @@ Route::prefix('v1')->group(function (): void {
         // Catálogo normativo de ALMG: se lee, no se edita. Se cambia re-sembrando.
         Route::get('categorias-gramaticales', [CategoriaGramaticalController::class, 'index'])
             ->name('categorias-gramaticales.index');
+
+        // Si lo guardado ya salió al sitio. De solo lectura y para los dos roles: quien
+        // carga vocabulario tiene el mismo derecho a saberlo que quien lo administra.
+        Route::get('publicacion', PublicacionController::class)->name('publicacion');
     });
 
     Route::middleware('token.exportacion')->prefix('export')->name('export.')->group(function (): void {

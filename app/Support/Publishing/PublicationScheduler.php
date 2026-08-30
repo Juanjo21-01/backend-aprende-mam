@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Support\Publishing;
 
 use App\Jobs\PublishSite;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 
@@ -30,6 +31,17 @@ final class PublicationScheduler
     private const CLAVE = 'publicacion.testigo';
 
     /**
+     * Para cuándo quedó programada la publicación pendiente.
+     *
+     * No participa en el debounce: existe solo para que el panel pueda decir «se publica
+     * sola alrededor de las 14:32» en vez de dejar al docente esperando sin saber cuánto.
+     * Y si esa hora ya pasó y sigue sin publicarse, es la única pista de que **no hay un
+     * trabajador de cola corriendo** — un fallo que si no, es completamente silencioso: los
+     * trabajos se acumulan en la tabla `jobs` y nadie se entera.
+     */
+    private const CLAVE_PROGRAMADA = 'publicacion.programada_para';
+
+    /**
      * El testigo tiene que sobrevivir holgadamente al retardo y a los reintentos del
      * trabajo. Una hora es de sobra y no deja basura: cada guardado lo reemplaza.
      */
@@ -45,11 +57,20 @@ final class PublicationScheduler
 
         $testigo = (string) Str::uuid();
 
-        Cache::put(self::CLAVE, $testigo, self::VIDA_TESTIGO_SEGUNDOS);
+        $cuando = now()->addSeconds(self::delaySeconds());
 
-        PublishSite::dispatch($testigo)->delay(
-            now()->addSeconds(self::delaySeconds())
-        );
+        Cache::put(self::CLAVE, $testigo, self::VIDA_TESTIGO_SEGUNDOS);
+        Cache::put(self::CLAVE_PROGRAMADA, $cuando->toIso8601String(), self::VIDA_TESTIGO_SEGUNDOS);
+
+        PublishSite::dispatch($testigo)->delay($cuando);
+    }
+
+    /** Cuándo debería dispararse la publicación pendiente, si hay alguna programada. */
+    public static function programadaPara(): ?CarbonImmutable
+    {
+        $cuando = Cache::get(self::CLAVE_PROGRAMADA);
+
+        return is_string($cuando) ? CarbonImmutable::parse($cuando) : null;
     }
 
     /** ¿Es este trabajo el último de la tanda, o ya lo sustituyó otro más nuevo? */

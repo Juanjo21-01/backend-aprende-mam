@@ -12,6 +12,7 @@
 import { NavLink, Outlet } from "react-router";
 
 import { usePanel } from "../panel";
+import { EstadoDePublicacion } from "./EstadoDePublicacion";
 
 function tokenDelCascaron(): string {
     return (
@@ -33,13 +34,15 @@ export function Layout() {
     return (
         <div className="min-h-screen bg-fondo text-texto">
             <header className="border-b border-borde bg-tarjeta">
-                <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 pt-4">
+                <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-6 pt-4">
                     <div>
                         <p className="font-semibold">AprendeMam</p>
                         <p className="text-sm text-tenue">
                             {sesion.nombre} · {sesion.rol_nombre}
                         </p>
                     </div>
+
+                    <EstadoDePublicacion />
 
                     <form method="POST" action="/admin/logout">
                         <input
