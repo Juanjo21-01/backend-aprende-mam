@@ -114,15 +114,15 @@ export function ListaFuentes() {
                         procedencia.
                     </Vacio>
                 ) : (
-                    <table className="w-full border-collapse text-sm">
+                    <table className="tabla">
                         <thead>
-                            <tr className="border-b border-borde text-left text-xs text-tinta-suave">
-                                <th className="px-4 py-2 font-medium">Título</th>
-                                <th className="px-4 py-2 font-medium">Institución</th>
-                                <th className="px-4 py-2 font-medium">Año</th>
-                                <th className="px-4 py-2 font-medium">Licencia</th>
-                                <th className="px-4 py-2 font-medium">Entradas</th>
-                                <th className="px-4 py-2 text-right font-medium">
+                            <tr>
+                                <th>Título</th>
+                                <th>Institución</th>
+                                <th>Año</th>
+                                <th>Licencia</th>
+                                <th>Entradas</th>
+                                <th className="text-right">
                                     Acciones
                                 </th>
                             </tr>
@@ -133,10 +133,10 @@ export function ListaFuentes() {
                                     key={fuente.id}
                                     className="border-b border-borde last:border-0"
                                 >
-                                    <td className="px-4 py-2.5">
+                                    <td>
                                         <Link
                                             to={`/fuentes/${fuente.id}`}
-                                            className="font-medium underline-offset-2 hover:underline"
+                                            className="enlace font-medium"
                                         >
                                             {fuente.titulo}
                                         </Link>
@@ -146,28 +146,28 @@ export function ListaFuentes() {
                                                 href={fuente.url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="ml-2 text-xs text-tinta-suave underline-offset-2 hover:underline"
+                                                className="enlace ml-2 text-xs text-tinta-suave"
                                             >
                                                 abrir
                                             </a>
                                         )}
                                     </td>
-                                    <td className="px-4 py-2.5">
+                                    <td>
                                         {fuente.institucion ?? "—"}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tinta-suave">
+                                    <td className="text-tinta-suave">
                                         {fuente.anio ?? "—"}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tinta-suave">
+                                    <td className="text-tinta-suave">
                                         {fuente.licencia ?? "—"}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tinta-suave">
+                                    <td className="text-tinta-suave">
                                         {fuente.total_entradas ?? 0}
                                     </td>
-                                    <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                                    <td className="text-right whitespace-nowrap">
                                         <Link
                                             to={`/fuentes/${fuente.id}`}
-                                            className="text-xs underline-offset-2 hover:underline"
+                                            className="enlace text-xs"
                                         >
                                             Editar
                                         </Link>
@@ -175,7 +175,7 @@ export function ListaFuentes() {
                                         {sesion.es_administrador && (
                                             <button
                                                 type="button"
-                                                className="ml-3 text-xs text-alerta underline-offset-2 hover:underline disabled:opacity-50"
+                                                className="enlace-peligro ml-3"
                                                 disabled={ocupada === fuente.id}
                                                 onClick={() => void borrar(fuente)}
                                             >

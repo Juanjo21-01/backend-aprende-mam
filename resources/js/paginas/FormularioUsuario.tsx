@@ -172,7 +172,7 @@ export function FormularioUsuario() {
 
                 <Link
                     to="/usuarios"
-                    className="text-sm text-tinta-suave underline-offset-2 hover:underline"
+                    className="enlace text-sm text-tinta-suave"
                 >
                     Volver a las cuentas
                 </Link>
@@ -202,7 +202,7 @@ export function FormularioUsuario() {
                             autoComplete="off"
                         />
                         {errorDe("name") !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">{errorDe("name")}</p>
+                            <p className="error-campo">{errorDe("name")}</p>
                         )}
                     </div>
 
@@ -219,9 +219,9 @@ export function FormularioUsuario() {
                             required
                             autoComplete="off"
                         />
-                        <p className="mt-1 text-xs text-tinta-suave">Con esto entra al panel.</p>
+                        <p className="ayuda">Con esto entra al panel.</p>
                         {errorDe("email") !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">{errorDe("email")}</p>
+                            <p className="error-campo">{errorDe("email")}</p>
                         )}
                     </div>
                 </div>
@@ -243,12 +243,12 @@ export function FormularioUsuario() {
                         <option value="administrador">Administrador</option>
                     </select>
 
-                    <p className="mt-1 text-xs text-tinta-suave">
+                    <p className="ayuda">
                         {rolBloqueado ??
                             "El editor carga y corrige. El administrador además borra y firma las revisiones."}
                     </p>
                     {errorDe("rol") !== undefined && (
-                        <p className="mt-1 text-xs text-alerta">{errorDe("rol")}</p>
+                        <p className="error-campo">{errorDe("rol")}</p>
                     )}
                 </div>
 
@@ -270,12 +270,12 @@ export function FormularioUsuario() {
                                 minLength={8}
                                 autoComplete="new-password"
                             />
-                            <p className="mt-1 text-xs text-tinta-suave">
+                            <p className="ayuda">
                                 Mínimo 8 caracteres. Decísela en persona: el sistema no manda
                                 correos.
                             </p>
                             {errorDe("password") !== undefined && (
-                                <p className="mt-1 text-xs text-alerta">
+                                <p className="error-campo">
                                     {errorDe("password")}
                                 </p>
                             )}
@@ -307,14 +307,14 @@ export function FormularioUsuario() {
                     </p>
                 )}
 
-                <div className="flex flex-wrap items-center gap-3 border-t border-borde pt-4">
+                <div className="pie-formulario">
                     <button type="submit" className="boton" disabled={guardando}>
                         {guardando ? "Guardando…" : "Guardar"}
                     </button>
 
                     <Link
                         to="/usuarios"
-                        className="text-sm text-tinta-suave underline-offset-2 hover:underline"
+                        className="enlace text-sm text-tinta-suave"
                     >
                         Cancelar
                     </Link>

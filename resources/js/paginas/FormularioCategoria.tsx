@@ -20,7 +20,7 @@ import {
     crearCategoria,
     obtenerCategoria,
 } from "../api/recursos";
-import { Aviso, Cargando } from "../componentes/Estados";
+import { Aviso, Cargando, Exito } from "../componentes/Estados";
 import { usePanel } from "../panel";
 import type { Categoria, DatosCategoria } from "../tipos";
 
@@ -231,7 +231,7 @@ export function FormularioCategoria() {
 
                 <Link
                     to="/categorias"
-                    className="text-sm text-tinta-suave underline-offset-2 hover:underline"
+                    className="enlace text-sm text-tinta-suave"
                 >
                     Volver a los temas
                 </Link>
@@ -240,31 +240,36 @@ export function FormularioCategoria() {
             {errorGeneral !== null && <Aviso>{errorGeneral}</Aviso>}
 
             {guardado !== null && (
-                <div className="tarjeta px-4 py-3 text-sm" role="status">
-                    <p className="text-jade">
-                        Se guardó{" "}
-                        <strong className="font-semibold">
-                            {guardado.nombre_es}
-                        </strong>
-                        .
-                    </p>
+                <Exito
+                    detalle={
+                        (corregido || direccionCambiada) && (
+                            <>
+                                {corregido && (
+                                    <p>
+                                        El nombre en Mam se escribió «
+                                        <span className="mam">{tecleado}</span>» y quedó
+                                        guardado como «
+                                        <span className="mam">
+                                            {guardado.nombre_mam}
+                                        </span>
+                                        »: el panel corrige la ortografía al guardar.
+                                    </p>
+                                )}
 
-                    {corregido && (
-                        <p className="mt-1 text-tinta-suave">
-                            El nombre en Mam se escribió «{tecleado}» y quedó
-                            guardado como «{guardado.nombre_mam}»: el panel
-                            corrige la ortografía al guardar.
-                        </p>
-                    )}
-
-                    {direccionCambiada && (
-                        <p className="mt-1 text-tinta-suave">
-                            Cambió la dirección del tema. En la próxima
-                            publicación, el enlace viejo del sitio deja de
-                            existir.
-                        </p>
-                    )}
-                </div>
+                                {direccionCambiada && (
+                                    <p className={corregido ? "mt-1" : undefined}>
+                                        Cambió la dirección del tema. En la próxima
+                                        publicación, el enlace viejo del sitio deja de
+                                        existir.
+                                    </p>
+                                )}
+                            </>
+                        )
+                    }
+                >
+                    Se guardó{" "}
+                    <strong className="font-semibold">{guardado.nombre_es}</strong>.
+                </Exito>
             )}
 
             <form
@@ -291,7 +296,7 @@ export function FormularioCategoria() {
                             autoComplete="off"
                         />
                         {errorDe("nombre_es") !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">
+                            <p className="error-campo">
                                 {errorDe("nombre_es")}
                             </p>
                         )}
@@ -314,12 +319,12 @@ export function FormularioCategoria() {
                             autoComplete="off"
                             spellCheck={false}
                         />
-                        <p className="mt-1 text-xs text-tinta-suave">
+                        <p className="ayuda">
                             Se corrige al guardar, igual que las palabras del
                             diccionario.
                         </p>
                         {errorDe("nombre_mam") !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">
+                            <p className="error-campo">
                                 {errorDe("nombre_mam")}
                             </p>
                         )}
@@ -342,13 +347,13 @@ export function FormularioCategoria() {
                         autoComplete="off"
                         spellCheck={false}
                     />
-                    <p className="mt-1 text-xs text-tinta-suave">
+                    <p className="ayuda">
                         Solo minúsculas, números y guiones. Se propone sola a
                         partir del nombre; si el tema ya está publicado,
                         cambiarla rompe su enlace.
                     </p>
                     {errorDe("slug") !== undefined && (
-                        <p className="mt-1 text-xs text-alerta">
+                        <p className="error-campo">
                             {errorDe("slug")}
                         </p>
                     )}
@@ -372,7 +377,7 @@ export function FormularioCategoria() {
                             autoComplete="off"
                         />
                         {errorDe("icono") !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">
+                            <p className="error-campo">
                                 {errorDe("icono")}
                             </p>
                         )}
@@ -393,11 +398,11 @@ export function FormularioCategoria() {
                                 cambiar("orden", evento.target.value)
                             }
                         />
-                        <p className="mt-1 text-xs text-tinta-suave">
+                        <p className="ayuda">
                             Menor va primero.
                         </p>
                         {errorDe("orden") !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">
+                            <p className="error-campo">
                                 {errorDe("orden")}
                             </p>
                         )}
@@ -423,14 +428,14 @@ export function FormularioCategoria() {
                             ))}
                         </select>
                         {errorDe("padre_id") !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">
+                            <p className="error-campo">
                                 {errorDe("padre_id")}
                             </p>
                         )}
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 border-t border-borde pt-4">
+                <div className="pie-formulario">
                     <button
                         type="submit"
                         className="boton"
@@ -441,7 +446,7 @@ export function FormularioCategoria() {
 
                     <Link
                         to="/categorias"
-                        className="text-sm text-tinta-suave underline-offset-2 hover:underline"
+                        className="enlace text-sm text-tinta-suave"
                     >
                         Cancelar
                     </Link>

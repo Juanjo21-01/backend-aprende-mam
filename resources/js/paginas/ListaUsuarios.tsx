@@ -23,7 +23,7 @@ import {
     listarUsuarios,
     resetearContrasena,
 } from "../api/recursos";
-import { Aviso, Cargando } from "../componentes/Estados";
+import { Aviso, Cargando, Exito } from "../componentes/Estados";
 import type { Usuario } from "../tipos";
 
 interface Reseteo {
@@ -155,24 +155,20 @@ export function ListaUsuarios() {
 
             {error !== null && <Aviso>{error}</Aviso>}
 
-            {hecho !== null && (
-                <div className="tarjeta px-4 py-3 text-sm text-jade" role="status">
-                    {hecho}
-                </div>
-            )}
+            {hecho !== null && <Exito>{hecho}</Exito>}
 
             <div className="tarjeta overflow-x-auto">
                 {cargando && usuarios === null ? (
                     <Cargando />
                 ) : (
-                    <table className="w-full border-collapse text-sm">
+                    <table className="tabla">
                         <thead>
-                            <tr className="border-b border-borde text-left text-xs text-tinta-suave">
-                                <th className="px-4 py-2 font-medium">Nombre</th>
-                                <th className="px-4 py-2 font-medium">Correo</th>
-                                <th className="px-4 py-2 font-medium">Rol</th>
-                                <th className="px-4 py-2 font-medium">Estado</th>
-                                <th className="px-4 py-2 text-right font-medium">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Correo</th>
+                                <th>Rol</th>
+                                <th>Estado</th>
+                                <th className="text-right">
                                     Acciones
                                 </th>
                             </tr>
@@ -186,41 +182,41 @@ export function ListaUsuarios() {
                                         key={usuario.id}
                                         className="border-b border-borde last:border-0"
                                     >
-                                        <td className="px-4 py-2.5">
+                                        <td>
                                             <Link
                                                 to={`/usuarios/${usuario.id}`}
-                                                className="font-medium underline-offset-2 hover:underline"
+                                                className="enlace font-medium"
                                             >
                                                 {usuario.nombre}
                                             </Link>
                                             {usuario.es_uno_mismo && (
-                                                <span className="ml-2 chip">vos</span>
+                                                <span className="chip-nota ml-2">vos</span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-2.5 text-tinta-suave">
+                                        <td className="text-tinta-suave">
                                             {usuario.correo}
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td>
                                             {usuario.rol_nombre}
                                         </td>
-                                        <td className="px-4 py-2.5">
+                                        <td>
                                             <span
                                                 className={`text-xs ${usuario.activo ? "text-jade" : "text-tinta-suave"}`}
                                             >
                                                 {usuario.activo ? "Activa" : "Desactivada"}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                                        <td className="text-right whitespace-nowrap">
                                             <Link
                                                 to={`/usuarios/${usuario.id}`}
-                                                className="text-xs underline-offset-2 hover:underline"
+                                                className="enlace text-xs"
                                             >
                                                 Editar
                                             </Link>
 
                                             <button
                                                 type="button"
-                                                className="ml-3 text-xs underline-offset-2 hover:underline disabled:opacity-50"
+                                                className="enlace ml-3 text-xs disabled:opacity-50"
                                                 disabled={ocupada === usuario.id}
                                                 onClick={() =>
                                                     setReseteo({
@@ -236,7 +232,7 @@ export function ListaUsuarios() {
                                             {motivo === null ? (
                                                 <button
                                                     type="button"
-                                                    className="ml-3 text-xs underline-offset-2 hover:underline disabled:opacity-50"
+                                                    className="enlace ml-3 text-xs disabled:opacity-50"
                                                     disabled={ocupada === usuario.id}
                                                     onClick={() =>
                                                         void alternarEstado(usuario)
@@ -301,7 +297,7 @@ export function ListaUsuarios() {
                                 minLength={8}
                                 autoComplete="new-password"
                             />
-                            <p className="mt-1 text-xs text-tinta-suave">Mínimo 8 caracteres.</p>
+                            <p className="ayuda">Mínimo 8 caracteres.</p>
                         </div>
 
                         <div>
@@ -325,7 +321,7 @@ export function ListaUsuarios() {
                         </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-3 border-t border-borde pt-4">
+                    <div className="pie-formulario">
                         <button
                             type="submit"
                             className="boton"
@@ -336,7 +332,7 @@ export function ListaUsuarios() {
 
                         <button
                             type="button"
-                            className="text-sm text-tinta-suave underline-offset-2 hover:underline"
+                            className="enlace text-sm text-tinta-suave"
                             onClick={() => setReseteo(null)}
                         >
                             Cancelar

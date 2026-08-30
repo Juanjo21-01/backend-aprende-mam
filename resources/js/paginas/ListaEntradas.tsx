@@ -22,7 +22,7 @@ import {
     marcarRevision,
     marcarRevisionEnLote,
 } from "../api/recursos";
-import { Aviso, Cargando, Vacio } from "../componentes/Estados";
+import { Aviso, Cargando, Exito, Vacio } from "../componentes/Estados";
 import { usePanel } from "../panel";
 import type { Entrada, FiltrosEntradas, Pagina } from "../tipos";
 import { SIN_ASIGNAR } from "../tipos";
@@ -269,7 +269,7 @@ export function ListaEntradas() {
                         placeholder="En Mam o en castellano"
                         autoComplete="off"
                     />
-                    <p className="mt-1 text-xs text-tinta-suave">
+                    <p className="ayuda">
                         Da igual el saltillo y las mayúsculas: la búsqueda usa la misma clave
                         que calculó el sistema al guardar.
                     </p>
@@ -337,7 +337,7 @@ export function ListaEntradas() {
                             </option>
                         ))}
                     </select>
-                    <p className="mt-1 text-xs text-tinta-suave">
+                    <p className="ayuda">
                         Para revisar de un tirón lo que acabás de transcribir de un libro.
                     </p>
                 </div>
@@ -359,11 +359,7 @@ export function ListaEntradas() {
                 </Aviso>
             )}
 
-            {hecho !== null && (
-                <div className="tarjeta px-4 py-3 text-sm text-jade" role="status">
-                    {hecho}
-                </div>
-            )}
+            {hecho !== null && <Exito>{hecho}</Exito>}
 
             {puedeFirmar && seleccion.length > 0 && (
                 <div className="tarjeta flex flex-wrap items-center gap-3 px-4 py-3">
@@ -391,7 +387,7 @@ export function ListaEntradas() {
 
                     <button
                         type="button"
-                        className="text-sm text-tinta-suave underline-offset-2 hover:underline"
+                        className="enlace text-sm text-tinta-suave"
                         onClick={() => setSeleccion([])}
                     >
                         Limpiar
@@ -409,11 +405,11 @@ export function ListaEntradas() {
                             : "Ninguna entrada coincide con estos filtros."}
                     </Vacio>
                 ) : (
-                    <table className="w-full border-collapse text-sm">
+                    <table className="tabla">
                         <thead>
-                            <tr className="border-b border-borde text-left text-xs text-tinta-suave">
+                            <tr>
                                 {puedeFirmar && (
-                                    <th className="w-8 px-4 py-2">
+                                    <th className="w-8">
                                         <input
                                             ref={casilleroDeTodas}
                                             type="checkbox"
@@ -432,12 +428,12 @@ export function ListaEntradas() {
                                         />
                                     </th>
                                 )}
-                                <th className="px-4 py-2 font-medium">Mam</th>
-                                <th className="px-4 py-2 font-medium">Castellano</th>
-                                <th className="px-4 py-2 font-medium">Clase</th>
-                                <th className="px-4 py-2 font-medium">Temas</th>
-                                <th className="px-4 py-2 font-medium">Revisión</th>
-                                <th className="px-4 py-2 text-right font-medium">Acciones</th>
+                                <th>Mam</th>
+                                <th>Castellano</th>
+                                <th>Clase</th>
+                                <th>Temas</th>
+                                <th>Revisión</th>
+                                <th className="text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -447,7 +443,7 @@ export function ListaEntradas() {
                                     className="border-b border-borde last:border-0"
                                 >
                                     {puedeFirmar && (
-                                        <td className="px-4 py-2.5 align-top">
+                                        <td>
                                             <input
                                                 type="checkbox"
                                                 aria-label={`Seleccionar ${entrada.mam}`}
@@ -459,20 +455,20 @@ export function ListaEntradas() {
                                         </td>
                                     )}
 
-                                    <td className="px-4 py-2.5 align-top">
+                                    <td>
                                         <Link
                                             to={`/entradas/${entrada.id}`}
-                                            className="font-medium underline-offset-2 hover:underline"
+                                            className="enlace font-medium"
                                         >
                                             {entrada.mam}
                                         </Link>
                                     </td>
 
-                                    <td className="px-4 py-2.5 align-top">
+                                    <td>
                                         {entrada.espanol}
                                     </td>
 
-                                    <td className="px-4 py-2.5 align-top text-tinta-suave">
+                                    <td className="text-tinta-suave">
                                         <span
                                             title={
                                                 entrada.categoria_gramatical?.nombre ??
@@ -484,12 +480,12 @@ export function ListaEntradas() {
                                         </span>
                                     </td>
 
-                                    <td className="px-4 py-2.5 align-top">
+                                    <td>
                                         <span className="flex flex-wrap gap-1">
                                             {entrada.categorias !== undefined &&
                                             entrada.categorias.length > 0 ? (
                                                 entrada.categorias.map((tema) => (
-                                                    <span key={tema.id} className="chip">
+                                                    <span key={tema.id} className="chip-tema">
                                                         {tema.nombre_es}
                                                     </span>
                                                 ))
@@ -499,11 +495,11 @@ export function ListaEntradas() {
                                         </span>
                                     </td>
 
-                                    <td className="px-4 py-2.5 align-top">
+                                    <td>
                                         {puedeFirmar ? (
                                             <button
                                                 type="button"
-                                                className={`text-xs underline-offset-2 hover:underline disabled:opacity-50 ${
+                                                className={`enlace text-xs disabled:opacity-50 ${
                                                     entrada.revisado
                                                         ? "text-jade"
                                                         : "text-tinta-suave"
@@ -531,10 +527,10 @@ export function ListaEntradas() {
                                         )}
                                     </td>
 
-                                    <td className="px-4 py-2.5 text-right align-top whitespace-nowrap">
+                                    <td className="text-right whitespace-nowrap">
                                         <Link
                                             to={`/entradas/${entrada.id}`}
-                                            className="text-xs underline-offset-2 hover:underline"
+                                            className="enlace text-xs"
                                         >
                                             Editar
                                         </Link>
@@ -542,7 +538,7 @@ export function ListaEntradas() {
                                         {sesion.es_administrador && (
                                             <button
                                                 type="button"
-                                                className="ml-3 text-xs text-alerta underline-offset-2 hover:underline disabled:opacity-50"
+                                                className="enlace-peligro ml-3"
                                                 disabled={ocupada === entrada.id}
                                                 onClick={() => void borrar(entrada)}
                                             >

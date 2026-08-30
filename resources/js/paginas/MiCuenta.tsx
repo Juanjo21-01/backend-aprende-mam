@@ -14,7 +14,7 @@ import { useState } from "react";
 
 import { ErrorApi } from "../api/cliente";
 import { cambiarContrasenaPropia } from "../api/recursos";
-import { Aviso } from "../componentes/Estados";
+import { Aviso, Exito } from "../componentes/Estados";
 import { usePanel } from "../panel";
 
 export function MiCuenta() {
@@ -75,14 +75,7 @@ export function MiCuenta() {
 
             {errorGeneral !== null && <Aviso>{errorGeneral}</Aviso>}
 
-            {hecho !== null && (
-                <div
-                    className="tarjeta px-4 py-3 text-sm text-jade"
-                    role="status"
-                >
-                    {hecho} Esta sesión sigue abierta.
-                </div>
-            )}
+            {hecho !== null && <Exito>{hecho} Esta sesión sigue abierta.</Exito>}
 
             <form
                 className="tarjeta grid gap-4 p-5"
@@ -105,7 +98,7 @@ export function MiCuenta() {
                         autoComplete="current-password"
                     />
                     {errorDe("current_password") !== undefined && (
-                        <p className="mt-1 text-xs text-alerta">
+                        <p className="error-campo">
                             {errorDe("current_password")}
                         </p>
                     )}
@@ -126,11 +119,11 @@ export function MiCuenta() {
                             minLength={8}
                             autoComplete="new-password"
                         />
-                        <p className="mt-1 text-xs text-tinta-suave">
+                        <p className="ayuda">
                             Mínimo 8 caracteres.
                         </p>
                         {errorDe("password") !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">
+                            <p className="error-campo">
                                 {errorDe("password")}
                             </p>
                         )}
@@ -157,7 +150,7 @@ export function MiCuenta() {
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 border-t border-borde pt-4">
+                <div className="pie-formulario">
                     <button
                         type="submit"
                         className="boton"

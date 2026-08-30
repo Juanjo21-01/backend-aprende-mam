@@ -114,16 +114,16 @@ export function ListaCategorias() {
                 ) : temas === null || temas.length === 0 ? (
                     <Vacio>Todavía no hay temas.</Vacio>
                 ) : (
-                    <table className="w-full border-collapse text-sm">
+                    <table className="tabla">
                         <thead>
-                            <tr className="border-b border-borde text-left text-xs text-tinta-suave">
-                                <th className="px-4 py-2 font-medium">Nombre</th>
-                                <th className="px-4 py-2 font-medium">En Mam</th>
-                                <th className="px-4 py-2 font-medium">Dirección</th>
-                                <th className="px-4 py-2 font-medium">Dentro de</th>
-                                <th className="px-4 py-2 font-medium">Orden</th>
-                                <th className="px-4 py-2 font-medium">Entradas</th>
-                                <th className="px-4 py-2 text-right font-medium">Acciones</th>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>En Mam</th>
+                                <th>Dirección</th>
+                                <th>Dentro de</th>
+                                <th>Orden</th>
+                                <th>Entradas</th>
+                                <th className="text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -132,30 +132,30 @@ export function ListaCategorias() {
                                     key={tema.id}
                                     className="border-b border-borde last:border-0"
                                 >
-                                    <td className="px-4 py-2.5">
+                                    <td>
                                         <Link
                                             to={`/categorias/${tema.id}`}
-                                            className="font-medium underline-offset-2 hover:underline"
+                                            className="enlace font-medium"
                                         >
                                             {tema.icono !== null && `${tema.icono} `}
                                             {tema.nombre_es}
                                         </Link>
                                     </td>
-                                    <td className="px-4 py-2.5">{tema.nombre_mam ?? "—"}</td>
-                                    <td className="px-4 py-2.5 font-mono text-xs text-tinta-suave">
+                                    <td>{tema.nombre_mam ?? "—"}</td>
+                                    <td className="font-mono text-xs text-tinta-suave">
                                         {tema.slug}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tinta-suave">
+                                    <td className="text-tinta-suave">
                                         {nombreDelPadre(tema)}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tinta-suave">{tema.orden}</td>
-                                    <td className="px-4 py-2.5 text-tinta-suave">
+                                    <td className="text-tinta-suave">{tema.orden}</td>
+                                    <td className="text-tinta-suave">
                                         {tema.total_entradas ?? 0}
                                     </td>
-                                    <td className="px-4 py-2.5 text-right whitespace-nowrap">
+                                    <td className="text-right whitespace-nowrap">
                                         <Link
                                             to={`/categorias/${tema.id}`}
-                                            className="text-xs underline-offset-2 hover:underline"
+                                            className="enlace text-xs"
                                         >
                                             Editar
                                         </Link>
@@ -163,7 +163,7 @@ export function ListaCategorias() {
                                         {sesion.es_administrador && (
                                             <button
                                                 type="button"
-                                                className="ml-3 text-xs text-alerta underline-offset-2 hover:underline disabled:opacity-50"
+                                                className="enlace-peligro ml-3"
                                                 disabled={ocupado === tema.id}
                                                 onClick={() => void borrar(tema)}
                                             >

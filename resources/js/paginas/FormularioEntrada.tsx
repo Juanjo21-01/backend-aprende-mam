@@ -21,7 +21,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 
 import { ErrorApi } from '../api/cliente';
 import { actualizarEntrada, crearEntrada, marcarRevision, obtenerEntrada } from '../api/recursos';
-import { Aviso, Cargando } from '../componentes/Estados';
+import { Aviso, Cargando, Exito } from '../componentes/Estados';
 import { usePanel } from '../panel';
 import type { DatosEntrada, Entrada } from '../tipos';
 
@@ -226,7 +226,7 @@ export function FormularioEntrada() {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h1 className="text-xl font-semibold">{esAlta ? 'Nueva entrada' : 'Editar entrada'}</h1>
 
-                <Link to="/entradas" className="text-sm text-tinta-suave underline-offset-2 hover:underline">
+                <Link to="/entradas" className="enlace text-sm text-tinta-suave">
                     Volver al listado
                 </Link>
             </div>
@@ -234,20 +234,21 @@ export function FormularioEntrada() {
             {errorGeneral !== null && <Aviso>{errorGeneral}</Aviso>}
 
             {guardada !== null && (
-                <div className="tarjeta px-4 py-3 text-sm" role="status">
-                    <p className="text-jade">
-                        Se guardó <strong className="font-semibold">{guardada.mam}</strong>.
-                    </p>
-
-                    {corregida && (
-                        <p className="mt-1 text-tinta-suave">
-                            Se escribió «{tecleado}» y el panel lo corrigió al guardar: el apóstrofo
-                            queda en su forma canónica, la «õ» que llega corrupta de los PDF vuelve a
-                            ser «ẍ» y el texto se normaliza. Es el sistema trabajando bien, no un
-                            error.
-                        </p>
-                    )}
-                </div>
+                <Exito
+                    detalle={
+                        corregida && (
+                            <p>
+                                Se escribió «<span className="mam">{tecleado}</span>» y el panel lo
+                                corrigió al guardar: el apóstrofo queda en su forma canónica, la «õ»
+                                que llega corrupta de los PDF vuelve a ser «ẍ» y el texto se
+                                normaliza. Es el sistema trabajando bien, no un error.
+                            </p>
+                        )
+                    }
+                >
+                    Se guardó{" "}
+                    <strong className="mam font-semibold">{guardada.mam}</strong>.
+                </Exito>
             )}
 
             <form
@@ -274,7 +275,7 @@ export function FormularioEntrada() {
                             spellCheck={false}
                         />
                         {errorDe('mam') !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">{errorDe('mam')}</p>
+                            <p className="error-campo">{errorDe('mam')}</p>
                         )}
                     </div>
 
@@ -291,7 +292,7 @@ export function FormularioEntrada() {
                             autoComplete="off"
                         />
                         {errorDe('espanol') !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">{errorDe('espanol')}</p>
+                            <p className="error-campo">{errorDe('espanol')}</p>
                         )}
                     </div>
                 </div>
@@ -308,7 +309,7 @@ export function FormularioEntrada() {
                         onChange={(evento) => cambiar('definicion', evento.target.value)}
                     />
                     {errorDe('definicion') !== undefined && (
-                        <p className="mt-1 text-xs text-alerta">{errorDe('definicion')}</p>
+                        <p className="error-campo">{errorDe('definicion')}</p>
                     )}
                 </div>
 
@@ -334,10 +335,10 @@ export function FormularioEntrada() {
                         {/* Las cuatro clases mayas no tienen equivalente en castellano: esto es
                             lo que le dice al editor qué está eligiendo. */}
                         {claseElegida?.descripcion != null && (
-                            <p className="mt-1 text-xs text-tinta-suave">{claseElegida.descripcion}</p>
+                            <p className="ayuda">{claseElegida.descripcion}</p>
                         )}
                         {errorDe('categoria_gramatical_id') !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">{errorDe('categoria_gramatical_id')}</p>
+                            <p className="error-campo">{errorDe('categoria_gramatical_id')}</p>
                         )}
                     </div>
 
@@ -354,7 +355,7 @@ export function FormularioEntrada() {
                             autoComplete="off"
                         />
                         {errorDe('municipio') !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">{errorDe('municipio')}</p>
+                            <p className="error-campo">{errorDe('municipio')}</p>
                         )}
                     </div>
                 </div>
@@ -376,7 +377,7 @@ export function FormularioEntrada() {
                     </div>
 
                     {errorDe('categorias') !== undefined && (
-                        <p className="mt-1 text-xs text-alerta">{errorDe('categorias')}</p>
+                        <p className="error-campo">{errorDe('categorias')}</p>
                     )}
                 </fieldset>
 
@@ -399,7 +400,7 @@ export function FormularioEntrada() {
                             ))}
                         </select>
                         {errorDe('fuente_id') !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">{errorDe('fuente_id')}</p>
+                            <p className="error-campo">{errorDe('fuente_id')}</p>
                         )}
                     </div>
 
@@ -415,12 +416,12 @@ export function FormularioEntrada() {
                             autoComplete="off"
                         />
                         {errorDe('pagina_fuente') !== undefined && (
-                            <p className="mt-1 text-xs text-alerta">{errorDe('pagina_fuente')}</p>
+                            <p className="error-campo">{errorDe('pagina_fuente')}</p>
                         )}
                     </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 border-t border-borde pt-4">
+                <div className="pie-formulario">
                     <button type="submit" className="boton" disabled={guardando}>
                         {guardando ? 'Guardando…' : 'Guardar'}
                     </button>
@@ -436,7 +437,7 @@ export function FormularioEntrada() {
                         </button>
                     )}
 
-                    <Link to="/entradas" className="text-sm text-tinta-suave underline-offset-2 hover:underline">
+                    <Link to="/entradas" className="enlace text-sm text-tinta-suave">
                         Cancelar
                     </Link>
 
