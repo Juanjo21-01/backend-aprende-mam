@@ -245,7 +245,7 @@ export function ListaEntradas() {
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                     <h1 className="text-xl font-semibold">Entradas</h1>
-                    <p className="mt-1 text-sm text-tenue">
+                    <p className="mt-1 text-sm text-tinta-suave">
                         Al sitio público solo llegan las entradas revisadas.
                     </p>
                 </div>
@@ -269,7 +269,7 @@ export function ListaEntradas() {
                         placeholder="En Mam o en castellano"
                         autoComplete="off"
                     />
-                    <p className="mt-1 text-xs text-tenue">
+                    <p className="mt-1 text-xs text-tinta-suave">
                         Da igual el saltillo y las mayúsculas: la búsqueda usa la misma clave
                         que calculó el sistema al guardar.
                     </p>
@@ -337,7 +337,7 @@ export function ListaEntradas() {
                             </option>
                         ))}
                     </select>
-                    <p className="mt-1 text-xs text-tenue">
+                    <p className="mt-1 text-xs text-tinta-suave">
                         Para revisar de un tirón lo que acabás de transcribir de un libro.
                     </p>
                 </div>
@@ -360,7 +360,7 @@ export function ListaEntradas() {
             )}
 
             {hecho !== null && (
-                <div className="tarjeta px-4 py-3 text-sm text-ok" role="status">
+                <div className="tarjeta px-4 py-3 text-sm text-jade" role="status">
                     {hecho}
                 </div>
             )}
@@ -391,7 +391,7 @@ export function ListaEntradas() {
 
                     <button
                         type="button"
-                        className="text-sm text-tenue underline-offset-2 hover:underline"
+                        className="text-sm text-tinta-suave underline-offset-2 hover:underline"
                         onClick={() => setSeleccion([])}
                     >
                         Limpiar
@@ -411,7 +411,7 @@ export function ListaEntradas() {
                 ) : (
                     <table className="w-full border-collapse text-sm">
                         <thead>
-                            <tr className="border-b border-borde text-left text-xs text-tenue">
+                            <tr className="border-b border-borde text-left text-xs text-tinta-suave">
                                 {puedeFirmar && (
                                     <th className="w-8 px-4 py-2">
                                         <input
@@ -472,7 +472,7 @@ export function ListaEntradas() {
                                         {entrada.espanol}
                                     </td>
 
-                                    <td className="px-4 py-2.5 align-top text-tenue">
+                                    <td className="px-4 py-2.5 align-top text-tinta-suave">
                                         <span
                                             title={
                                                 entrada.categoria_gramatical?.nombre ??
@@ -494,7 +494,7 @@ export function ListaEntradas() {
                                                     </span>
                                                 ))
                                             ) : (
-                                                <span className="text-tenue">—</span>
+                                                <span className="text-tinta-suave">—</span>
                                             )}
                                         </span>
                                     </td>
@@ -505,8 +505,8 @@ export function ListaEntradas() {
                                                 type="button"
                                                 className={`text-xs underline-offset-2 hover:underline disabled:opacity-50 ${
                                                     entrada.revisado
-                                                        ? "text-ok"
-                                                        : "text-tenue"
+                                                        ? "text-jade"
+                                                        : "text-tinta-suave"
                                                 }`}
                                                 disabled={ocupada === entrada.id}
                                                 onClick={() => void alternarRevision(entrada)}
@@ -522,7 +522,7 @@ export function ListaEntradas() {
                                             </button>
                                         ) : (
                                             <span
-                                                className={`text-xs ${entrada.revisado ? "text-ok" : "text-tenue"}`}
+                                                className={`text-xs ${entrada.revisado ? "text-jade" : "text-tinta-suave"}`}
                                             >
                                                 {entrada.revisado
                                                     ? "Revisada"
@@ -542,7 +542,7 @@ export function ListaEntradas() {
                                         {sesion.es_administrador && (
                                             <button
                                                 type="button"
-                                                className="ml-3 text-xs text-error underline-offset-2 hover:underline disabled:opacity-50"
+                                                className="ml-3 text-xs text-alerta underline-offset-2 hover:underline disabled:opacity-50"
                                                 disabled={ocupada === entrada.id}
                                                 onClick={() => void borrar(entrada)}
                                             >
@@ -558,13 +558,16 @@ export function ListaEntradas() {
             </div>
 
             {meta !== undefined && meta.total > 0 && (
-                <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-tenue">
+                <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-tinta-suave">
                     <p>
                         {meta.from}–{meta.to} de {meta.total}
                         {cargando && " · actualizando…"}
                     </p>
 
-                    <div className="flex items-center gap-3">
+                    {/* `flex-wrap`: sin él, los cuatro controles suman 326 px de ancho
+                        mínimo y el panel entero se desplazaba en horizontal por debajo de
+                        340 px de pantalla. */}
+                    <div className="flex flex-wrap items-center gap-3">
                         <label className="flex items-center gap-2 text-xs">
                             Por página
                             <select

@@ -172,7 +172,7 @@ export function FormularioUsuario() {
 
                 <Link
                     to="/usuarios"
-                    className="text-sm text-tenue underline-offset-2 hover:underline"
+                    className="text-sm text-tinta-suave underline-offset-2 hover:underline"
                 >
                     Volver a las cuentas
                 </Link>
@@ -202,7 +202,7 @@ export function FormularioUsuario() {
                             autoComplete="off"
                         />
                         {errorDe("name") !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe("name")}</p>
+                            <p className="mt-1 text-xs text-alerta">{errorDe("name")}</p>
                         )}
                     </div>
 
@@ -219,9 +219,9 @@ export function FormularioUsuario() {
                             required
                             autoComplete="off"
                         />
-                        <p className="mt-1 text-xs text-tenue">Con esto entra al panel.</p>
+                        <p className="mt-1 text-xs text-tinta-suave">Con esto entra al panel.</p>
                         {errorDe("email") !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe("email")}</p>
+                            <p className="mt-1 text-xs text-alerta">{errorDe("email")}</p>
                         )}
                     </div>
                 </div>
@@ -243,12 +243,12 @@ export function FormularioUsuario() {
                         <option value="administrador">Administrador</option>
                     </select>
 
-                    <p className="mt-1 text-xs text-tenue">
+                    <p className="mt-1 text-xs text-tinta-suave">
                         {rolBloqueado ??
                             "El editor carga y corrige. El administrador además borra y firma las revisiones."}
                     </p>
                     {errorDe("rol") !== undefined && (
-                        <p className="mt-1 text-xs text-error">{errorDe("rol")}</p>
+                        <p className="mt-1 text-xs text-alerta">{errorDe("rol")}</p>
                     )}
                 </div>
 
@@ -270,12 +270,12 @@ export function FormularioUsuario() {
                                 minLength={8}
                                 autoComplete="new-password"
                             />
-                            <p className="mt-1 text-xs text-tenue">
+                            <p className="mt-1 text-xs text-tinta-suave">
                                 Mínimo 8 caracteres. Decísela en persona: el sistema no manda
                                 correos.
                             </p>
                             {errorDe("password") !== undefined && (
-                                <p className="mt-1 text-xs text-error">
+                                <p className="mt-1 text-xs text-alerta">
                                     {errorDe("password")}
                                 </p>
                             )}
@@ -301,7 +301,7 @@ export function FormularioUsuario() {
                 )}
 
                 {!esAlta && (
-                    <p className="border-t border-borde pt-4 text-xs text-tenue">
+                    <p className="border-t border-borde pt-4 text-xs text-tinta-suave">
                         La contraseña se cambia desde la lista de cuentas: es otra acción,
                         porque además cierra las sesiones abiertas de esa persona.
                     </p>
@@ -314,7 +314,7 @@ export function FormularioUsuario() {
 
                     <Link
                         to="/usuarios"
-                        className="text-sm text-tenue underline-offset-2 hover:underline"
+                        className="text-sm text-tinta-suave underline-offset-2 hover:underline"
                     >
                         Cancelar
                     </Link>

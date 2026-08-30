@@ -81,7 +81,7 @@ export function ListaCategorias() {
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                     <h1 className="text-xl font-semibold">Temas</h1>
-                    <p className="mt-1 text-sm text-tenue">
+                    <p className="mt-1 text-sm text-tinta-suave">
                         Agrupan el vocabulario y son la puerta de entrada del sitio público. El
                         orden lo decidís vos, no el alfabeto.
                     </p>
@@ -116,7 +116,7 @@ export function ListaCategorias() {
                 ) : (
                     <table className="w-full border-collapse text-sm">
                         <thead>
-                            <tr className="border-b border-borde text-left text-xs text-tenue">
+                            <tr className="border-b border-borde text-left text-xs text-tinta-suave">
                                 <th className="px-4 py-2 font-medium">Nombre</th>
                                 <th className="px-4 py-2 font-medium">En Mam</th>
                                 <th className="px-4 py-2 font-medium">Dirección</th>
@@ -142,14 +142,14 @@ export function ListaCategorias() {
                                         </Link>
                                     </td>
                                     <td className="px-4 py-2.5">{tema.nombre_mam ?? "—"}</td>
-                                    <td className="px-4 py-2.5 font-mono text-xs text-tenue">
+                                    <td className="px-4 py-2.5 font-mono text-xs text-tinta-suave">
                                         {tema.slug}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tenue">
+                                    <td className="px-4 py-2.5 text-tinta-suave">
                                         {nombreDelPadre(tema)}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tenue">{tema.orden}</td>
-                                    <td className="px-4 py-2.5 text-tenue">
+                                    <td className="px-4 py-2.5 text-tinta-suave">{tema.orden}</td>
+                                    <td className="px-4 py-2.5 text-tinta-suave">
                                         {tema.total_entradas ?? 0}
                                     </td>
                                     <td className="px-4 py-2.5 text-right whitespace-nowrap">
@@ -163,7 +163,7 @@ export function ListaCategorias() {
                                         {sesion.es_administrador && (
                                             <button
                                                 type="button"
-                                                className="ml-3 text-xs text-error underline-offset-2 hover:underline disabled:opacity-50"
+                                                className="ml-3 text-xs text-alerta underline-offset-2 hover:underline disabled:opacity-50"
                                                 disabled={ocupado === tema.id}
                                                 onClick={() => void borrar(tema)}
                                             >

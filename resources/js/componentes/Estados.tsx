@@ -8,7 +8,7 @@ import type { ReactNode } from 'react';
 
 export function Cargando({ texto = 'Cargando…' }: { texto?: string }) {
     return (
-        <p className="py-10 text-center text-sm text-tenue" role="status">
+        <p className="py-10 text-center text-sm text-tinta-suave" role="status">
             {texto}
         </p>
     );
@@ -23,7 +23,7 @@ export function Aviso({
     children: ReactNode;
     accion?: ReactNode;
 }) {
-    const color = tono === 'error' ? 'text-error' : 'text-tenue';
+    const color = tono === 'error' ? 'text-alerta' : 'text-tinta-suave';
 
     return (
         <div className="tarjeta flex flex-wrap items-center justify-between gap-3 px-4 py-3" role="alert">
@@ -34,5 +34,5 @@ export function Aviso({
 }
 
 export function Vacio({ children }: { children: ReactNode }) {
-    return <p className="py-10 text-center text-sm text-tenue">{children}</p>;
+    return <p className="py-10 text-center text-sm text-tinta-suave">{children}</p>;
 }

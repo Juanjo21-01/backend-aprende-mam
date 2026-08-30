@@ -78,7 +78,8 @@ function aDatos(formulario: Formulario): DatosCategoria {
         slug: formulario.slug,
         icono: texto(formulario.icono),
         orden: formulario.orden === "" ? null : Number(formulario.orden),
-        padre_id: formulario.padre_id === "" ? null : Number(formulario.padre_id),
+        padre_id:
+            formulario.padre_id === "" ? null : Number(formulario.padre_id),
     };
 }
 
@@ -183,7 +184,9 @@ export function FormularioCategoria() {
             setGuardado(grabado);
         } catch (error) {
             setFallo(
-                error instanceof Error ? error : new Error("No se pudo guardar."),
+                error instanceof Error
+                    ? error
+                    : new Error("No se pudo guardar."),
             );
         } finally {
             setGuardando(false);
@@ -197,8 +200,8 @@ export function FormularioCategoria() {
         fallo === null
             ? null
             : fallo instanceof ErrorApi && fallo.estado === 422
-              ? null
-              : fallo.message;
+                ? null
+                : fallo.message;
 
     const corregido =
         guardado !== null &&
@@ -206,10 +209,14 @@ export function FormularioCategoria() {
         (guardado.nombre_mam ?? "") !== tecleado;
 
     const direccionCambiada =
-        original !== null && guardado !== null && original.slug !== guardado.slug;
+        original !== null &&
+        guardado !== null &&
+        original.slug !== guardado.slug;
 
     // Un tema no puede ser su propio padre; el backend lo rechaza y aquí ni se ofrece.
-    const posiblesPadres = categorias.filter((tema) => tema.id !== original?.id);
+    const posiblesPadres = categorias.filter(
+        (tema) => tema.id !== original?.id,
+    );
 
     if (cargando) {
         return <Cargando texto="Cargando el tema…" />;
@@ -224,7 +231,7 @@ export function FormularioCategoria() {
 
                 <Link
                     to="/categorias"
-                    className="text-sm text-tenue underline-offset-2 hover:underline"
+                    className="text-sm text-tinta-suave underline-offset-2 hover:underline"
                 >
                     Volver a los temas
                 </Link>
@@ -234,22 +241,27 @@ export function FormularioCategoria() {
 
             {guardado !== null && (
                 <div className="tarjeta px-4 py-3 text-sm" role="status">
-                    <p className="text-ok">
+                    <p className="text-jade">
                         Se guardó{" "}
-                        <strong className="font-semibold">{guardado.nombre_es}</strong>.
+                        <strong className="font-semibold">
+                            {guardado.nombre_es}
+                        </strong>
+                        .
                     </p>
 
                     {corregido && (
-                        <p className="mt-1 text-tenue">
-                            El nombre en Mam se escribió «{tecleado}» y quedó guardado como «
-                            {guardado.nombre_mam}»: el panel corrige la ortografía al guardar.
+                        <p className="mt-1 text-tinta-suave">
+                            El nombre en Mam se escribió «{tecleado}» y quedó
+                            guardado como «{guardado.nombre_mam}»: el panel
+                            corrige la ortografía al guardar.
                         </p>
                     )}
 
                     {direccionCambiada && (
-                        <p className="mt-1 text-tenue">
-                            Cambió la dirección del tema. En la próxima publicación, el enlace
-                            viejo del sitio deja de existir.
+                        <p className="mt-1 text-tinta-suave">
+                            Cambió la dirección del tema. En la próxima
+                            publicación, el enlace viejo del sitio deja de
+                            existir.
                         </p>
                     )}
                 </div>
@@ -271,13 +283,15 @@ export function FormularioCategoria() {
                             id="nombre_es"
                             className="campo"
                             value={formulario.nombre_es}
-                            onChange={(evento) => cambiarNombre(evento.target.value)}
+                            onChange={(evento) =>
+                                cambiarNombre(evento.target.value)
+                            }
                             required
                             autoFocus
                             autoComplete="off"
                         />
                         {errorDe("nombre_es") !== undefined && (
-                            <p className="mt-1 text-xs text-error">
+                            <p className="mt-1 text-xs text-alerta">
                                 {errorDe("nombre_es")}
                             </p>
                         )}
@@ -286,7 +300,9 @@ export function FormularioCategoria() {
                     <div>
                         <label className="etiqueta" htmlFor="nombre_mam">
                             Nombre en Mam{" "}
-                            <span className="font-normal text-tenue">(opcional)</span>
+                            <span className="font-normal text-tinta-suave">
+                                (opcional)
+                            </span>
                         </label>
                         <input
                             id="nombre_mam"
@@ -298,11 +314,12 @@ export function FormularioCategoria() {
                             autoComplete="off"
                             spellCheck={false}
                         />
-                        <p className="mt-1 text-xs text-tenue">
-                            Se corrige al guardar, igual que las palabras del diccionario.
+                        <p className="mt-1 text-xs text-tinta-suave">
+                            Se corrige al guardar, igual que las palabras del
+                            diccionario.
                         </p>
                         {errorDe("nombre_mam") !== undefined && (
-                            <p className="mt-1 text-xs text-error">
+                            <p className="mt-1 text-xs text-alerta">
                                 {errorDe("nombre_mam")}
                             </p>
                         )}
@@ -325,12 +342,15 @@ export function FormularioCategoria() {
                         autoComplete="off"
                         spellCheck={false}
                     />
-                    <p className="mt-1 text-xs text-tenue">
-                        Solo minúsculas, números y guiones. Se propone sola a partir del
-                        nombre; si el tema ya está publicado, cambiarla rompe su enlace.
+                    <p className="mt-1 text-xs text-tinta-suave">
+                        Solo minúsculas, números y guiones. Se propone sola a
+                        partir del nombre; si el tema ya está publicado,
+                        cambiarla rompe su enlace.
                     </p>
                     {errorDe("slug") !== undefined && (
-                        <p className="mt-1 text-xs text-error">{errorDe("slug")}</p>
+                        <p className="mt-1 text-xs text-alerta">
+                            {errorDe("slug")}
+                        </p>
                     )}
                 </div>
 
@@ -338,17 +358,23 @@ export function FormularioCategoria() {
                     <div>
                         <label className="etiqueta" htmlFor="icono">
                             Ícono{" "}
-                            <span className="font-normal text-tenue">(opcional)</span>
+                            <span className="font-normal text-tinta-suave">
+                                (opcional)
+                            </span>
                         </label>
                         <input
                             id="icono"
                             className="campo"
                             value={formulario.icono}
-                            onChange={(evento) => cambiar("icono", evento.target.value)}
+                            onChange={(evento) =>
+                                cambiar("icono", evento.target.value)
+                            }
                             autoComplete="off"
                         />
                         {errorDe("icono") !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe("icono")}</p>
+                            <p className="mt-1 text-xs text-alerta">
+                                {errorDe("icono")}
+                            </p>
                         )}
                     </div>
 
@@ -363,11 +389,17 @@ export function FormularioCategoria() {
                             min={0}
                             max={65535}
                             value={formulario.orden}
-                            onChange={(evento) => cambiar("orden", evento.target.value)}
+                            onChange={(evento) =>
+                                cambiar("orden", evento.target.value)
+                            }
                         />
-                        <p className="mt-1 text-xs text-tenue">Menor va primero.</p>
+                        <p className="mt-1 text-xs text-tinta-suave">
+                            Menor va primero.
+                        </p>
                         {errorDe("orden") !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe("orden")}</p>
+                            <p className="mt-1 text-xs text-alerta">
+                                {errorDe("orden")}
+                            </p>
                         )}
                     </div>
 
@@ -391,7 +423,7 @@ export function FormularioCategoria() {
                             ))}
                         </select>
                         {errorDe("padre_id") !== undefined && (
-                            <p className="mt-1 text-xs text-error">
+                            <p className="mt-1 text-xs text-alerta">
                                 {errorDe("padre_id")}
                             </p>
                         )}
@@ -399,13 +431,17 @@ export function FormularioCategoria() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 border-t border-borde pt-4">
-                    <button type="submit" className="boton" disabled={guardando}>
+                    <button
+                        type="submit"
+                        className="boton"
+                        disabled={guardando}
+                    >
                         {guardando ? "Guardando…" : "Guardar"}
                     </button>
 
                     <Link
                         to="/categorias"
-                        className="text-sm text-tenue underline-offset-2 hover:underline"
+                        className="text-sm text-tinta-suave underline-offset-2 hover:underline"
                     >
                         Cancelar
                     </Link>

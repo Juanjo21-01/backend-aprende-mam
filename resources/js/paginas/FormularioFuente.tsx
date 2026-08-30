@@ -159,7 +159,7 @@ export function FormularioFuente() {
 
                 <Link
                     to="/fuentes"
-                    className="text-sm text-tenue underline-offset-2 hover:underline"
+                    className="text-sm text-tinta-suave underline-offset-2 hover:underline"
                 >
                     Volver a las fuentes
                 </Link>
@@ -187,12 +187,12 @@ export function FormularioFuente() {
                         autoFocus
                         autoComplete="off"
                     />
-                    <p className="mt-1 text-xs text-tenue">
+                    <p className="mt-1 text-xs text-tinta-suave">
                         Como está impreso en la portada. Es una cita: no se corrige la
                         ortografía, ni siquiera la del Mam.
                     </p>
                     {errorDe("titulo") !== undefined && (
-                        <p className="mt-1 text-xs text-error">{errorDe("titulo")}</p>
+                        <p className="mt-1 text-xs text-alerta">{errorDe("titulo")}</p>
                     )}
                 </div>
 
@@ -200,7 +200,7 @@ export function FormularioFuente() {
                     <div>
                         <label className="etiqueta" htmlFor="institucion">
                             Institución{" "}
-                            <span className="font-normal text-tenue">(opcional)</span>
+                            <span className="font-normal text-tinta-suave">(opcional)</span>
                         </label>
                         <input
                             id="institucion"
@@ -213,7 +213,7 @@ export function FormularioFuente() {
                             autoComplete="off"
                         />
                         {errorDe("institucion") !== undefined && (
-                            <p className="mt-1 text-xs text-error">
+                            <p className="mt-1 text-xs text-alerta">
                                 {errorDe("institucion")}
                             </p>
                         )}
@@ -222,7 +222,7 @@ export function FormularioFuente() {
                     <div>
                         <label className="etiqueta" htmlFor="anio">
                             Año{" "}
-                            <span className="font-normal text-tenue">(opcional)</span>
+                            <span className="font-normal text-tinta-suave">(opcional)</span>
                         </label>
                         <input
                             id="anio"
@@ -233,7 +233,7 @@ export function FormularioFuente() {
                             onChange={(evento) => cambiar("anio", evento.target.value)}
                         />
                         {errorDe("anio") !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe("anio")}</p>
+                            <p className="mt-1 text-xs text-alerta">{errorDe("anio")}</p>
                         )}
                     </div>
                 </div>
@@ -241,7 +241,7 @@ export function FormularioFuente() {
                 <div>
                     <label className="etiqueta" htmlFor="licencia">
                         Licencia{" "}
-                        <span className="font-normal text-tenue">(opcional)</span>
+                        <span className="font-normal text-tinta-suave">(opcional)</span>
                     </label>
                     <input
                         id="licencia"
@@ -252,14 +252,14 @@ export function FormularioFuente() {
                         autoComplete="off"
                     />
                     {errorDe("licencia") !== undefined && (
-                        <p className="mt-1 text-xs text-error">{errorDe("licencia")}</p>
+                        <p className="mt-1 text-xs text-alerta">{errorDe("licencia")}</p>
                     )}
                 </div>
 
                 <div>
                     <label className="etiqueta" htmlFor="url">
                         Dirección web{" "}
-                        <span className="font-normal text-tenue">(opcional)</span>
+                        <span className="font-normal text-tinta-suave">(opcional)</span>
                     </label>
                     <input
                         id="url"
@@ -271,7 +271,7 @@ export function FormularioFuente() {
                         autoComplete="off"
                     />
                     {errorDe("url") !== undefined && (
-                        <p className="mt-1 text-xs text-error">{errorDe("url")}</p>
+                        <p className="mt-1 text-xs text-alerta">{errorDe("url")}</p>
                     )}
                 </div>
 
@@ -282,7 +282,7 @@ export function FormularioFuente() {
 
                     <Link
                         to="/fuentes"
-                        className="text-sm text-tenue underline-offset-2 hover:underline"
+                        className="text-sm text-tinta-suave underline-offset-2 hover:underline"
                     >
                         Cancelar
                     </Link>

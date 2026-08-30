@@ -37,7 +37,7 @@ function SoloAdministradores({ children }: { children: ReactNode }) {
     if (!sesion.es_administrador) {
         return (
             <div className="py-10 text-center">
-                <p className="text-sm text-tenue">
+                <p className="text-sm text-tinta-suave">
                     Solo un administrador puede gestionar las cuentas del panel.
                 </p>
                 <Link
@@ -56,7 +56,7 @@ function SoloAdministradores({ children }: { children: ReactNode }) {
 function NoEncontrado() {
     return (
         <div className="py-10 text-center">
-            <p className="text-sm text-tenue">Esa pantalla del panel no existe.</p>
+            <p className="text-sm text-tinta-suave">Esa pantalla del panel no existe.</p>
             <Link
                 to="/entradas"
                 className="mt-2 inline-block text-sm underline-offset-2 hover:underline"

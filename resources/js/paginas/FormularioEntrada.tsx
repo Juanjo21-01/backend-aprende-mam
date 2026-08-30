@@ -226,7 +226,7 @@ export function FormularioEntrada() {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h1 className="text-xl font-semibold">{esAlta ? 'Nueva entrada' : 'Editar entrada'}</h1>
 
-                <Link to="/entradas" className="text-sm text-tenue underline-offset-2 hover:underline">
+                <Link to="/entradas" className="text-sm text-tinta-suave underline-offset-2 hover:underline">
                     Volver al listado
                 </Link>
             </div>
@@ -235,12 +235,12 @@ export function FormularioEntrada() {
 
             {guardada !== null && (
                 <div className="tarjeta px-4 py-3 text-sm" role="status">
-                    <p className="text-ok">
+                    <p className="text-jade">
                         Se guardó <strong className="font-semibold">{guardada.mam}</strong>.
                     </p>
 
                     {corregida && (
-                        <p className="mt-1 text-tenue">
+                        <p className="mt-1 text-tinta-suave">
                             Se escribió «{tecleado}» y el panel lo corrigió al guardar: el apóstrofo
                             queda en su forma canónica, la «õ» que llega corrupta de los PDF vuelve a
                             ser «ẍ» y el texto se normaliza. Es el sistema trabajando bien, no un
@@ -274,7 +274,7 @@ export function FormularioEntrada() {
                             spellCheck={false}
                         />
                         {errorDe('mam') !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe('mam')}</p>
+                            <p className="mt-1 text-xs text-alerta">{errorDe('mam')}</p>
                         )}
                     </div>
 
@@ -291,14 +291,14 @@ export function FormularioEntrada() {
                             autoComplete="off"
                         />
                         {errorDe('espanol') !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe('espanol')}</p>
+                            <p className="mt-1 text-xs text-alerta">{errorDe('espanol')}</p>
                         )}
                     </div>
                 </div>
 
                 <div>
                     <label className="etiqueta" htmlFor="definicion">
-                        Definición <span className="font-normal text-tenue">(opcional)</span>
+                        Definición <span className="font-normal text-tinta-suave">(opcional)</span>
                     </label>
                     <textarea
                         id="definicion"
@@ -308,7 +308,7 @@ export function FormularioEntrada() {
                         onChange={(evento) => cambiar('definicion', evento.target.value)}
                     />
                     {errorDe('definicion') !== undefined && (
-                        <p className="mt-1 text-xs text-error">{errorDe('definicion')}</p>
+                        <p className="mt-1 text-xs text-alerta">{errorDe('definicion')}</p>
                     )}
                 </div>
 
@@ -334,16 +334,16 @@ export function FormularioEntrada() {
                         {/* Las cuatro clases mayas no tienen equivalente en castellano: esto es
                             lo que le dice al editor qué está eligiendo. */}
                         {claseElegida?.descripcion != null && (
-                            <p className="mt-1 text-xs text-tenue">{claseElegida.descripcion}</p>
+                            <p className="mt-1 text-xs text-tinta-suave">{claseElegida.descripcion}</p>
                         )}
                         {errorDe('categoria_gramatical_id') !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe('categoria_gramatical_id')}</p>
+                            <p className="mt-1 text-xs text-alerta">{errorDe('categoria_gramatical_id')}</p>
                         )}
                     </div>
 
                     <div>
                         <label className="etiqueta" htmlFor="municipio">
-                            Municipio <span className="font-normal text-tenue">(opcional)</span>
+                            Municipio <span className="font-normal text-tinta-suave">(opcional)</span>
                         </label>
                         <input
                             id="municipio"
@@ -354,7 +354,7 @@ export function FormularioEntrada() {
                             autoComplete="off"
                         />
                         {errorDe('municipio') !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe('municipio')}</p>
+                            <p className="mt-1 text-xs text-alerta">{errorDe('municipio')}</p>
                         )}
                     </div>
                 </div>
@@ -376,7 +376,7 @@ export function FormularioEntrada() {
                     </div>
 
                     {errorDe('categorias') !== undefined && (
-                        <p className="mt-1 text-xs text-error">{errorDe('categorias')}</p>
+                        <p className="mt-1 text-xs text-alerta">{errorDe('categorias')}</p>
                     )}
                 </fieldset>
 
@@ -399,7 +399,7 @@ export function FormularioEntrada() {
                             ))}
                         </select>
                         {errorDe('fuente_id') !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe('fuente_id')}</p>
+                            <p className="mt-1 text-xs text-alerta">{errorDe('fuente_id')}</p>
                         )}
                     </div>
 
@@ -415,7 +415,7 @@ export function FormularioEntrada() {
                             autoComplete="off"
                         />
                         {errorDe('pagina_fuente') !== undefined && (
-                            <p className="mt-1 text-xs text-error">{errorDe('pagina_fuente')}</p>
+                            <p className="mt-1 text-xs text-alerta">{errorDe('pagina_fuente')}</p>
                         )}
                     </div>
                 </div>
@@ -436,12 +436,12 @@ export function FormularioEntrada() {
                         </button>
                     )}
 
-                    <Link to="/entradas" className="text-sm text-tenue underline-offset-2 hover:underline">
+                    <Link to="/entradas" className="text-sm text-tinta-suave underline-offset-2 hover:underline">
                         Cancelar
                     </Link>
 
                     {esAlta && (
-                        <p className="w-full text-xs text-tenue">
+                        <p className="w-full text-xs text-tinta-suave">
                             «Guardar y cargar otra» conserva la fuente, la página, los temas y la
                             clase de palabra.
                         </p>
@@ -454,7 +454,7 @@ export function FormularioEntrada() {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
                             <p className="font-medium">Revisión lingüística</p>
-                            <p className="mt-0.5 text-xs text-tenue">
+                            <p className="mt-0.5 text-xs text-tinta-suave">
                                 {entrada.revisado
                                     ? `Revisada${entrada.revisado_por != null ? ` por ${entrada.revisado_por.nombre}` : ''}. Se publica.`
                                     : 'Sin revisar. No llega al sitio público.'}
@@ -471,28 +471,28 @@ export function FormularioEntrada() {
                                 {entrada.revisado ? 'Quitar la revisión' : 'Marcar como revisada'}
                             </button>
                         ) : (
-                            <p className="text-xs text-tenue">Solo el validador lingüístico la marca.</p>
+                            <p className="text-xs text-tinta-suave">Solo el validador lingüístico la marca.</p>
                         )}
                     </div>
 
                     <dl className="grid gap-2 border-t border-borde pt-3 text-xs sm:grid-cols-2">
                         <div>
-                            <dt className="text-tenue">Clave de búsqueda</dt>
+                            <dt className="text-tinta-suave">Clave de búsqueda</dt>
                             <dd className="font-mono break-all">{entrada.busqueda}</dd>
                         </div>
                         <div>
-                            <dt className="text-tenue">Clave de orden</dt>
+                            <dt className="text-tinta-suave">Clave de orden</dt>
                             <dd className="font-mono break-all">{entrada.orden_alfabetico}</dd>
                         </div>
                     </dl>
 
-                    <p className="text-xs text-tenue">
+                    <p className="text-xs text-tinta-suave">
                         Las calcula el sistema a partir de la palabra en Mam y no se pueden editar. Si
                         el orden parece equivocado, hay que reportarlo, no corregirlo a mano.
                     </p>
 
                     {entrada.creado_por != null && (
-                        <p className="text-xs text-tenue">Cargada por {entrada.creado_por.nombre}.</p>
+                        <p className="text-xs text-tinta-suave">Cargada por {entrada.creado_por.nombre}.</p>
                     )}
                 </div>
             )}

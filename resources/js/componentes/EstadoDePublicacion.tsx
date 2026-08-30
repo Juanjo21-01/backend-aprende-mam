@@ -1,12 +1,21 @@
 /**
- * «Lo que guardé, ¿ya está en el sitio?», en un renglón del encabezado.
+ * «Lo que guardé, ¿ya está en el sitio?», en una franja bajo el encabezado.
  *
  * Es la única pregunta del panel que no se contesta mirando contenido. Antes no se
  * contestaba en ningún lado: había que entrar al servidor a leer el log.
  *
  * Se refresca al cambiar de pantalla —que es justo después de guardar algo— y cada minuto,
  * porque la publicación llega sola cinco minutos más tarde y el docente no debería tener que
- * recargar para enterarse. Un clic la actualiza a mano.
+ * recargar para enterarse. Un botón la actualiza a mano.
+ *
+ * EL DETALLE ERA UN `title` Y AHORA ES TEXTO. Un tooltip no existe en una pantalla táctil:
+ * en el teléfono, la frase que explica por qué no hay trabajador de cola corriendo era
+ * literalmente inalcanzable. Va dentro de un `<details>` nativo —sin JavaScript, navegable
+ * con teclado— que deja siempre visible el renglón corto y guarda debajo la explicación.
+ *
+ * Tres colores para cinco estados, y a propósito: jade lo que está bien, alerta lo que está
+ * roto, gris lo que está esperando. La frase distingue el resto. El oro no aparece aquí:
+ * está reservado a la revisión de una entrada.
  *
  * Si la consulta falla no se pinta nada. Es información de apoyo: romper el encabezado por
  * ella sería peor que no mostrarla.
@@ -69,7 +78,7 @@ function describir(estado: EstadoPublicacion): Aspecto {
     // siempre, que parecería una publicación que tarda en llegar.
     if (!estado.habilitada) {
         return {
-            color: "bg-tenue",
+            color: "bg-tinta-suave",
             texto: "Publicación sin configurar",
             detalle: `${contenido} ${ultima} No hay un destino de publicación configurado, así que el sitio no se va a recompilar solo.`,
         };
@@ -77,7 +86,7 @@ function describir(estado: EstadoPublicacion): Aspecto {
 
     if (!estado.sin_publicar) {
         return {
-            color: "bg-ok",
+            color: "bg-jade",
             texto: `Sitio al día · v${estado.version}`,
             detalle: `${contenido} ${ultima}`,
         };
@@ -85,7 +94,7 @@ function describir(estado: EstadoPublicacion): Aspecto {
 
     if (estado.programada_para === null) {
         return {
-            color: "bg-error",
+            color: "bg-alerta",
             texto: "Cambios sin publicar",
             detalle: `${contenido} ${ultima} Hay cambios sin publicar y ninguna publicación programada.`,
         };
@@ -98,12 +107,12 @@ function describir(estado: EstadoPublicacion): Aspecto {
     // este renglón es el único sitio donde se puede ver.
     return vencida
         ? {
-              color: "bg-error",
+              color: "bg-alerta",
               texto: `Sin publicar · debía salir ${aLaHora(estado.programada_para)}`,
               detalle: `${contenido} ${ultima} La publicación debía dispararse a las ${aLaHora(estado.programada_para)} y no ha ocurrido: puede que no haya un trabajador de cola corriendo en el servidor.`,
           }
         : {
-              color: "bg-tenue",
+              color: "bg-tinta-suave",
               texto: `Sin publicar · sale ${aLaHora(estado.programada_para)}`,
               detalle: `${contenido} ${ultima} Se publica sola unos minutos después del último cambio.`,
           };
@@ -138,17 +147,36 @@ export function EstadoDePublicacion() {
     const aspecto = describir(estado);
 
     return (
-        <button
-            type="button"
-            className="flex items-center gap-2 text-xs text-tenue"
-            title={`${aspecto.detalle} (Clic para actualizar.)`}
-            onClick={() => void consultar()}
-        >
-            <span
-                className={`inline-block size-2 shrink-0 rounded-full ${aspecto.color}`}
-                aria-hidden="true"
-            />
-            {aspecto.texto}
-        </button>
+        <details className="group border-b border-borde bg-papel-hondo">
+            <summary className="mx-auto flex max-w-6xl cursor-pointer list-none items-center gap-2 px-4 py-2 text-xs sm:px-6 [&::-webkit-details-marker]:hidden">
+                <span
+                    className={`inline-block size-2 shrink-0 rounded-full ${aspecto.color}`}
+                    aria-hidden="true"
+                />
+
+                <span className="font-medium text-tinta">{aspecto.texto}</span>
+
+                <span className="ml-auto shrink-0 text-tinta-suave underline-offset-2 group-open:hidden">
+                    Ver detalle
+                </span>
+                <span className="ml-auto hidden shrink-0 text-tinta-suave underline-offset-2 group-open:inline">
+                    Ocultar
+                </span>
+            </summary>
+
+            <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 pb-3 sm:px-6">
+                <p className="max-w-prose text-xs text-tinta-suave">
+                    {aspecto.detalle}
+                </p>
+
+                <button
+                    type="button"
+                    className="boton-secundario px-2 py-1 text-xs"
+                    onClick={() => void consultar()}
+                >
+                    Actualizar
+                </button>
+            </div>
+        </details>
     );
 }

@@ -142,7 +142,7 @@ export function ListaUsuarios() {
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                     <h1 className="text-xl font-semibold">Cuentas</h1>
-                    <p className="mt-1 text-sm text-tenue">
+                    <p className="mt-1 text-sm text-tinta-suave">
                         El editor carga y corrige contenido. El administrador además borra y
                         firma las revisiones.
                     </p>
@@ -156,7 +156,7 @@ export function ListaUsuarios() {
             {error !== null && <Aviso>{error}</Aviso>}
 
             {hecho !== null && (
-                <div className="tarjeta px-4 py-3 text-sm text-ok" role="status">
+                <div className="tarjeta px-4 py-3 text-sm text-jade" role="status">
                     {hecho}
                 </div>
             )}
@@ -167,7 +167,7 @@ export function ListaUsuarios() {
                 ) : (
                     <table className="w-full border-collapse text-sm">
                         <thead>
-                            <tr className="border-b border-borde text-left text-xs text-tenue">
+                            <tr className="border-b border-borde text-left text-xs text-tinta-suave">
                                 <th className="px-4 py-2 font-medium">Nombre</th>
                                 <th className="px-4 py-2 font-medium">Correo</th>
                                 <th className="px-4 py-2 font-medium">Rol</th>
@@ -197,7 +197,7 @@ export function ListaUsuarios() {
                                                 <span className="ml-2 chip">vos</span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-2.5 text-tenue">
+                                        <td className="px-4 py-2.5 text-tinta-suave">
                                             {usuario.correo}
                                         </td>
                                         <td className="px-4 py-2.5">
@@ -205,7 +205,7 @@ export function ListaUsuarios() {
                                         </td>
                                         <td className="px-4 py-2.5">
                                             <span
-                                                className={`text-xs ${usuario.activo ? "text-ok" : "text-tenue"}`}
+                                                className={`text-xs ${usuario.activo ? "text-jade" : "text-tinta-suave"}`}
                                             >
                                                 {usuario.activo ? "Activa" : "Desactivada"}
                                             </span>
@@ -248,7 +248,7 @@ export function ListaUsuarios() {
                                                 </button>
                                             ) : (
                                                 <span
-                                                    className="ml-3 text-xs text-tenue"
+                                                    className="ml-3 text-xs text-tinta-suave"
                                                     title={motivo}
                                                 >
                                                     No se desactiva
@@ -275,7 +275,7 @@ export function ListaUsuarios() {
                         <h2 className="font-semibold">
                             Contraseña nueva para {reseteo.usuario.nombre}
                         </h2>
-                        <p className="mt-1 text-sm text-tenue">
+                        <p className="mt-1 text-sm text-tinta-suave">
                             No hace falta la anterior: quien la olvidó no la sabe. Al
                             guardarla se cierran sus sesiones abiertas.
                         </p>
@@ -301,7 +301,7 @@ export function ListaUsuarios() {
                                 minLength={8}
                                 autoComplete="new-password"
                             />
-                            <p className="mt-1 text-xs text-tenue">Mínimo 8 caracteres.</p>
+                            <p className="mt-1 text-xs text-tinta-suave">Mínimo 8 caracteres.</p>
                         </div>
 
                         <div>
@@ -336,7 +336,7 @@ export function ListaUsuarios() {
 
                         <button
                             type="button"
-                            className="text-sm text-tenue underline-offset-2 hover:underline"
+                            className="text-sm text-tinta-suave underline-offset-2 hover:underline"
                             onClick={() => setReseteo(null)}
                         >
                             Cancelar

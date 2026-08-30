@@ -61,14 +61,14 @@ export function MiCuenta() {
         fallo === null
             ? null
             : fallo instanceof ErrorApi && fallo.estado === 422
-              ? null
-              : fallo.message;
+                ? null
+                : fallo.message;
 
     return (
         <div className="grid max-w-xl gap-5">
             <div>
                 <h1 className="text-xl font-semibold">Mi cuenta</h1>
-                <p className="mt-1 text-sm text-tenue">
+                <p className="mt-1 text-sm text-tinta-suave">
                     {sesion.nombre} · {sesion.correo} · {sesion.rol_nombre}
                 </p>
             </div>
@@ -76,7 +76,10 @@ export function MiCuenta() {
             {errorGeneral !== null && <Aviso>{errorGeneral}</Aviso>}
 
             {hecho !== null && (
-                <div className="tarjeta px-4 py-3 text-sm text-ok" role="status">
+                <div
+                    className="tarjeta px-4 py-3 text-sm text-jade"
+                    role="status"
+                >
                     {hecho} Esta sesión sigue abierta.
                 </div>
             )}
@@ -102,7 +105,7 @@ export function MiCuenta() {
                         autoComplete="current-password"
                     />
                     {errorDe("current_password") !== undefined && (
-                        <p className="mt-1 text-xs text-error">
+                        <p className="mt-1 text-xs text-alerta">
                             {errorDe("current_password")}
                         </p>
                     )}
@@ -123,16 +126,21 @@ export function MiCuenta() {
                             minLength={8}
                             autoComplete="new-password"
                         />
-                        <p className="mt-1 text-xs text-tenue">Mínimo 8 caracteres.</p>
+                        <p className="mt-1 text-xs text-tinta-suave">
+                            Mínimo 8 caracteres.
+                        </p>
                         {errorDe("password") !== undefined && (
-                            <p className="mt-1 text-xs text-error">
+                            <p className="mt-1 text-xs text-alerta">
                                 {errorDe("password")}
                             </p>
                         )}
                     </div>
 
                     <div>
-                        <label className="etiqueta" htmlFor="confirmacion-propia">
+                        <label
+                            className="etiqueta"
+                            htmlFor="confirmacion-propia"
+                        >
                             Repetirla
                         </label>
                         <input
@@ -140,7 +148,9 @@ export function MiCuenta() {
                             className="campo"
                             type="password"
                             value={confirmacion}
-                            onChange={(evento) => setConfirmacion(evento.target.value)}
+                            onChange={(evento) =>
+                                setConfirmacion(evento.target.value)
+                            }
                             required
                             autoComplete="new-password"
                         />
@@ -148,13 +158,17 @@ export function MiCuenta() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 border-t border-borde pt-4">
-                    <button type="submit" className="boton" disabled={guardando}>
+                    <button
+                        type="submit"
+                        className="boton"
+                        disabled={guardando}
+                    >
                         {guardando ? "Guardando…" : "Cambiar la contraseña"}
                     </button>
 
-                    <p className="text-xs text-tenue">
-                        Si la olvidás, te la resetea un administrador: este sistema no manda
-                        correos de recuperación.
+                    <p className="text-xs text-tinta-suave">
+                        Si la olvidás, te la resetea un administrador: este
+                        sistema no manda correos de recuperación.
                     </p>
                 </div>
             </form>

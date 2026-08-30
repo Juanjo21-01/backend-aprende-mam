@@ -4,38 +4,127 @@
 @source '../../storage/framework/views/*.php';
 
 /*
-   Los mismos colores que ya usan el login y el cascarón, aquí como variables de tema.
+ * Charis SIL, la misma versión recortada que sirve el sitio público. Los dos WOFF2 salen de
+ * `scripts/subset-fonts.mjs` del repo de Astro y están copiados aquí, no enlazados: el panel
+ * y el sitio se despliegan por separado y no comparten dominio.
+ *
+ * El recorte ya incluye lo único que el panel necesita de más frente a una fuente de
+ * sistema: `Ẍẍ`, los tres apóstrofos (U+2019 canónico, U+0027 y U+02BC), y la `õÕ` con que
+ * los PDF de origen corrompen la `ẍ`.
+ *
+ * `swap` y no `block`: si la fuente tarda, el editor ve su palabra con la del sistema antes
+ * que no verla. La `ẍ` sale mal ese instante, pero ya sale mal hoy todo el tiempo.
+ */
+@font-face {
+    font-family: 'Charis SIL';
+    src: url('/fonts/charis-sil-400.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
 
-   Se declaran una vez y se reasignan en el modo oscuro, así que las pantallas escriben
-   `bg-tarjeta` o `text-tenue` y nunca un `dark:` encima de cada clase. El día que haya que
-   cambiar un tono, se cambia en dos líneas y no en cuarenta archivos.
-*/
+@font-face {
+    font-family: 'Charis SIL';
+    src: url('/fonts/charis-sil-700.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+/*
+ * La paleta es la del sitio público (`src/styles/global.css` del repo de Astro), con las
+ * proporciones invertidas. Allá el jade es banda ancha y el papel es el contenido; aquí el
+ * jade es solo filo —la barra de arriba, el anillo de foco, la pestaña activa— y el papel
+ * ocupa el resto. Un panel de administración no debe llamar la atención: la debe llamar la
+ * palabra que se está transcribiendo.
+ *
+ * DOS REGLAS QUE NO SON DE GUSTO:
+ *
+ * 1. El oro significa una sola cosa en todo el panel: `revisado = true`, es decir, «esto
+ *    llega al sitio público». Ningún otro elemento es dorado, nunca. Se aprende una vez.
+ * 2. No hay un segundo verde. Lo correcto, lo publicado y la acción principal son jade. El
+ *    `#15803d` que había antes se fue por eso.
+ *
+ * Los tonos se declaran una vez y se reasignan en oscuro, así que las pantallas escriben
+ * `bg-tarjeta` o `text-tinta-suave` y nunca un `dark:` encima de cada clase.
+ */
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 
-    --color-fondo: #fdfdfc;
+    /*
+     * La familia del Mam. Se aplica con la clase `.mam` y nunca a un contenedor entero: el
+     * reparto es por lo que el texto ES, no por dónde está. Ver el comentario de `.mam`.
+     */
+    --font-mam: 'Charis SIL', 'Gentium Plus', Georgia, 'Times New Roman', serif;
+
+    --color-papel: #fdfcf9;
+    --color-papel-hondo: #f5f2ec;
     --color-tarjeta: #ffffff;
-    --color-texto: #1b1b18;
-    --color-tenue: #706f6c;
-    --color-borde: #e3e3e0;
-    --color-acento: #1b1b18;
-    --color-acento-texto: #fdfdfc;
-    --color-error: #b42318;
-    --color-ok: #15803d;
+    --color-tinta: #1f1c19;
+    --color-tinta-suave: #57504a;
+    --color-borde: #e0dad0;
+
+    /*
+     * LA BANDA NO CAMBIA CON EL TEMA, y los tres tonos que viven sobre ella tampoco.
+     *
+     * `--color-jade-hondo` es el fondo de la cabecera y de la cenefa; `--color-sobre-jade`
+     * el texto que va encima; `--color-jade-claro` el secundario. Los tres están fuera del
+     * bloque de modo oscuro a propósito: la banda es verde oscuro en los dos temas, así que
+     * si su texto siguiera a `--color-papel` se volvería casi negro sobre verde oscuro al
+     * pasar a oscuro (2.5:1, ilegible). Medido: papel sobre jade-hondo 9.2:1, jade-claro
+     * sobre jade-hondo 5.0:1.
+     */
+    --color-jade: #0f6f63;
+    --color-jade-hondo: #0a4f47;
+    --color-sobre-jade: #fdfcf9;
+    --color-jade-claro: #9dc4bd;
+
+    /*
+     * El hover de `.boton`, que no se puede sacar de `jade-hondo`. En claro el botón es
+     * verde oscuro con texto papel y oscurece al pasar el ratón; en oscuro es verde claro
+     * con texto casi negro, así que oscurecerlo dejaría el texto invisible: ahí tiene que
+     * aclarar.
+     */
+    --color-jade-hover: #0a4f47;
+
+    /*
+     * `--color-oro` sobre papel da 2.9:1: no pasa AA como texto. Por eso la marca de
+     * revisión es una FORMA —el rombo de la cenefa— y la palabra «Revisada» va en tinta al
+     * lado. Si alguna vez hace falta oro como texto, es `--color-oro-hondo` (5.3:1 sobre papel).
+     */
+    --color-oro: #d99a1e;
+    --color-oro-hondo: #90610c;
+
+    --color-alerta: #9a3412;
 }
 
+/*
+ * Modo oscuro, derivado de la misma familia cálida y no de un gris neutro: el `#0a0a0a` que
+ * había antes es del esqueleto de Laravel y no tiene nada que ver con este proyecto.
+ *
+ * El jade y la alerta suben de luminosidad porque los tonos claros no llegan a 4.5:1 sobre
+ * un fondo oscuro. El oro casi no se mueve: ya pasa. Los pares medidos están en la tabla de
+ * `docs/` — si se toca un valor, hay que volver a medirlos.
+ */
 @media (prefers-color-scheme: dark) {
     :root {
-        --color-fondo: #0a0a0a;
-        --color-tarjeta: #161615;
-        --color-texto: #ededec;
-        --color-tenue: #a1a09a;
-        --color-borde: #3e3e3a;
-        --color-acento: #ededec;
-        --color-acento-texto: #0a0a0a;
-        --color-error: #ff7b6b;
-        --color-ok: #4ade80;
+        --color-papel: #14120e;
+        --color-papel-hondo: #23201a;
+        --color-tarjeta: #1c1a15;
+        --color-tinta: #efeae0;
+        --color-tinta-suave: #a89f90;
+        --color-borde: #38332a;
+
+        /* `jade-hondo`, `sobre-jade` y `jade-claro` no se tocan: ver el comentario de la
+           banda, arriba. */
+        --color-jade: #4fb3a4;
+        --color-jade-hover: #6ac4b5;
+
+        --color-oro: #e0a733;
+        --color-oro-hondo: #d99a1e;
+
+        --color-alerta: #ea8f6d;
     }
 }
 
@@ -43,29 +132,120 @@
     :root {
         color-scheme: light dark;
     }
+
+    /*
+     * Foco visible en todo el panel, con el jade de la marca. Va aquí y no en cada
+     * componente para que ningún control nuevo nazca sin él.
+     */
+    :focus-visible {
+        outline: 2px solid var(--color-jade);
+        outline-offset: 2px;
+    }
+
+    h1,
+    h2,
+    h3 {
+        text-wrap: balance;
+    }
+
+    body {
+        text-wrap: pretty;
+    }
 }
 
 @layer components {
-    /* Casillas de formulario y selectores. */
+    /*
+     * TEXTO EN MAM.
+     *
+     * Se pone en el dato, nunca en un contenedor: el lema de la tabla, el campo `mam`, el
+     * `nombre_mam` de un tema, las claves derivadas. La maquinaria del panel —etiquetas,
+     * botones, ayudas— se queda en la sans. El reparto es por lo que el texto ES.
+     *
+     * No es decoración. Ninguna fuente de sistema trae `ẍ`, así que el navegador la
+     * sustituye por otra familia a mitad de palabra y el editor ve un trazo que no es el
+     * que va a ver el estudiante. Charis SIL sí la trae, y además hace distinguibles de un
+     * vistazo el apóstrofo recto (') del canónico (’), que es exactamente la corrección que
+     * el normalizador promete y que hoy es invisible en pantalla.
+     *
+     * `font-synthesis-weight: none`: con 400 y 700 reales cargados, sintetizar un peso solo
+     * puede engordar el trazo por deformación y emborronar la diéresis de `ẍ`.
+     *
+     * Nunca aplicar `text-transform` sobre esto: los dígrafos y las glotalizadas no se
+     * mayusculizan letra por letra.
+     */
+    .mam {
+        font-family: var(--font-mam);
+        font-variant-ligatures: none;
+        font-synthesis-weight: none;
+    }
+
+    /*
+     * La cenefa: la banda de rombos del huipil que el logo lleva bajo el libro. Es el único
+     * adorno del panel y aparece una sola vez, cerrando la cabecera.
+     *
+     * A diferencia del sitio público, aquí va a escala mitad (`background-size`, 16×7 en vez
+     * de los 32×14 intrínsecos del SVG). A tamaño completo, catorce píxeles de rombos de
+     * colores bajo la barra de una herramienta de trabajo pesan demasiado; a la mitad queda
+     * un filete texturado que sigue siendo reconociblemente el mismo motivo.
+     *
+     * Es decoración: siempre en un elemento vacío, sin texto, invisible para un lector de
+     * pantalla.
+     */
+    .cenefa {
+        height: 7px;
+        background-color: var(--color-jade-hondo);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='14'%3E%3Cpath d='M8 1 15 7 8 13 1 7Z' fill='%23d99a1e'/%3E%3Cpath d='M8 4.5 10.5 7 8 9.5 5.5 7Z' fill='%230a4f47'/%3E%3Cpath d='M24 1 31 7 24 13 17 7Z' fill='%23b8452f'/%3E%3Cpath d='M24 4.5 26.5 7 24 9.5 21.5 7Z' fill='%230a4f47'/%3E%3Cpath d='M16 4 19 7 16 10 13 7Z' fill='%231f7f74'/%3E%3Cpath d='M0 4 3 7 0 10-3 7Z' fill='%231f7f74'/%3E%3Cpath d='M32 4 35 7 32 10 29 7Z' fill='%231f7f74'/%3E%3C/svg%3E");
+        background-repeat: repeat-x;
+        background-size: 16px 7px;
+    }
+
+    /*
+     * Casillas de formulario y selectores.
+     *
+     * `min-w-0` no es cosmético. Un `<select>` reclama de ancho mínimo el de su opción más
+     * larga, y las opciones de «Fuente» son títulos de libros; dentro de una rejilla, cuyos
+     * elementos traen `min-width: auto`, ese mínimo empuja la tarjeta más allá del ancho de
+     * la pantalla y el panel entero se desplaza en horizontal. Se veía a 320 px en el filtro
+     * de entradas. Con `min-width: 0` el selector se encoge y recorta el texto de la opción,
+     * que es lo correcto: el nombre completo sigue estando al desplegarlo.
+     */
     .campo {
-        @apply w-full rounded-lg border border-borde bg-fondo px-3 py-2 text-sm text-texto;
-        @apply focus:outline-2 focus:outline-offset-1 focus:outline-acento;
+        @apply w-full min-w-0 rounded-lg border border-borde bg-papel px-3 py-2 text-sm text-tinta;
+        @apply placeholder:text-tinta-suave;
+        @apply focus:outline-2 focus:outline-offset-1 focus:outline-jade;
     }
 
     .etiqueta {
-        @apply mb-1.5 block text-[0.8125rem] font-medium text-texto;
+        @apply mb-1.5 block text-[0.8125rem] font-medium text-tinta;
     }
 
+    /*
+     * Aquí `text-papel` sí sigue al tema, y es correcto: en claro el botón es verde oscuro
+     * con texto papel (5.9:1) y en oscuro es verde claro con texto casi negro (7.4:1). El
+     * que no puede seguir al tema es el texto de la banda, que usa `sobre-jade`.
+     */
     .boton {
-        @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-acento px-3 py-2;
-        @apply text-sm font-medium text-acento-texto;
-        @apply disabled:cursor-not-allowed disabled:opacity-50;
+        @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-jade px-3 py-2;
+        @apply text-sm font-medium text-papel;
+        @apply hover:bg-jade-hover;
+        @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-jade;
     }
 
     .boton-secundario {
         @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-borde bg-tarjeta px-3 py-2;
-        @apply text-sm font-medium text-texto;
-        @apply disabled:cursor-not-allowed disabled:opacity-50;
+        @apply text-sm font-medium text-tinta;
+        @apply hover:border-jade hover:text-jade;
+        @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-borde disabled:hover:text-tinta;
+    }
+
+    /*
+     * Botón sobre la banda jade de la cabecera. No sirve `.boton-secundario`: su borde y su
+     * fondo están pensados para papel y sobre el verde desaparecen.
+     */
+    .boton-banda {
+        @apply inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5;
+        @apply border border-jade-claro/40 text-sm font-medium text-sobre-jade;
+        @apply hover:border-jade-claro hover:bg-white/10;
     }
 
     .tarjeta {
@@ -74,6 +254,28 @@
 
     /* Temas de una entrada en la tabla. */
     .chip {
-        @apply inline-block rounded-md border border-borde px-1.5 py-0.5 text-[0.6875rem] text-tenue;
+        @apply inline-block rounded-md border border-borde px-1.5 py-0.5 text-[0.6875rem] text-tinta-suave;
+    }
+
+    /*
+     * LA MARCA DE REVISIÓN.
+     *
+     * El rombo dorado de `RotuloSeccion` del sitio público, reducido a un elemento y
+     * cargado con el único significado que el oro tiene aquí: esta entrada está revisada y
+     * por lo tanto la va a ver un estudiante.
+     *
+     * Es una forma y no un color de texto a propósito: el oro sobre papel da 2.9:1 y no
+     * pasa AA. La palabra va al lado, en tinta. Quien no distinga el dorado sigue leyendo
+     * «Revisada».
+     *
+     * `.marca-revision-hueca` es el mismo rombo sin rellenar, para la fila que todavía no
+     * pasó la revisión: reserva el sitio, así las columnas no bailan entre una fila y otra.
+     */
+    .marca-revision {
+        @apply inline-block size-2 shrink-0 rotate-45 bg-oro;
+    }
+
+    .marca-revision-hueca {
+        @apply inline-block size-2 shrink-0 rotate-45 border border-borde;
     }
 }

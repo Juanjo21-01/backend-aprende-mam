@@ -78,7 +78,7 @@ export function ListaFuentes() {
             <div className="flex flex-wrap items-end justify-between gap-3">
                 <div>
                     <h1 className="text-xl font-semibold">Fuentes</h1>
-                    <p className="mt-1 text-sm text-tenue">
+                    <p className="mt-1 text-sm text-tinta-suave">
                         De dónde salió cada palabra. El sitio público las cita al pie de la
                         entrada.
                     </p>
@@ -116,7 +116,7 @@ export function ListaFuentes() {
                 ) : (
                     <table className="w-full border-collapse text-sm">
                         <thead>
-                            <tr className="border-b border-borde text-left text-xs text-tenue">
+                            <tr className="border-b border-borde text-left text-xs text-tinta-suave">
                                 <th className="px-4 py-2 font-medium">Título</th>
                                 <th className="px-4 py-2 font-medium">Institución</th>
                                 <th className="px-4 py-2 font-medium">Año</th>
@@ -146,7 +146,7 @@ export function ListaFuentes() {
                                                 href={fuente.url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="ml-2 text-xs text-tenue underline-offset-2 hover:underline"
+                                                className="ml-2 text-xs text-tinta-suave underline-offset-2 hover:underline"
                                             >
                                                 abrir
                                             </a>
@@ -155,13 +155,13 @@ export function ListaFuentes() {
                                     <td className="px-4 py-2.5">
                                         {fuente.institucion ?? "—"}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tenue">
+                                    <td className="px-4 py-2.5 text-tinta-suave">
                                         {fuente.anio ?? "—"}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tenue">
+                                    <td className="px-4 py-2.5 text-tinta-suave">
                                         {fuente.licencia ?? "—"}
                                     </td>
-                                    <td className="px-4 py-2.5 text-tenue">
+                                    <td className="px-4 py-2.5 text-tinta-suave">
                                         {fuente.total_entradas ?? 0}
                                     </td>
                                     <td className="px-4 py-2.5 text-right whitespace-nowrap">
@@ -175,7 +175,7 @@ export function ListaFuentes() {
                                         {sesion.es_administrador && (
                                             <button
                                                 type="button"
-                                                className="ml-3 text-xs text-error underline-offset-2 hover:underline disabled:opacity-50"
+                                                className="ml-3 text-xs text-alerta underline-offset-2 hover:underline disabled:opacity-50"
                                                 disabled={ocupada === fuente.id}
                                                 onClick={() => void borrar(fuente)}
                                             >

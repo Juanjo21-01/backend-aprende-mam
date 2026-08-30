@@ -33,7 +33,7 @@
     @viteReactRefresh
     @vite(['resources/css/app.css', 'resources/js/app.tsx'])
 </head>
-<body class="min-h-screen bg-fondo text-texto antialiased">
+<body class="min-h-screen bg-papel text-tinta antialiased">
     <div id="panel"></div>
 
     <noscript>
