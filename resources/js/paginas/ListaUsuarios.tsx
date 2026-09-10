@@ -25,6 +25,13 @@ import {
 } from "../api/recursos";
 import { Confirmacion } from "../componentes/Confirmacion";
 import { Aviso, Cargando, Exito } from "../componentes/Estados";
+import {
+    IconoActivar,
+    IconoClave,
+    IconoDesactivar,
+    IconoEditar,
+    IconoNueva,
+} from "../componentes/Iconos";
 import { useCabeLaTabla } from "../pantalla";
 import type { Usuario } from "../tipos";
 
@@ -148,26 +155,28 @@ export function ListaUsuarios() {
         const motivo = motivoParaNoDesactivar(usuario);
 
         return (
-            <>
-                <Link to={`/usuarios/${usuario.id}`} className="enlace-accion">
+            <div className="acciones-fila">
+                <Link to={`/usuarios/${usuario.id}`} className="boton-fila">
+                    <IconoEditar className="size-3.5" />
                     Editar
                 </Link>
 
                 <button
                     type="button"
-                    className="enlace-accion ml-3 disabled:opacity-50"
+                    className="boton-fila"
                     disabled={ocupada === usuario.id}
                     onClick={() =>
                         setReseteo({ usuario, password: "", confirmacion: "" })
                     }
                 >
+                    <IconoClave className="size-3.5" />
                     Contraseña
                 </button>
 
                 {motivo === null ? (
                     <button
                         type="button"
-                        className="enlace-accion ml-3 disabled:opacity-50"
+                        className="boton-fila"
                         disabled={ocupada === usuario.id}
                         onClick={() =>
                             usuario.activo
@@ -175,16 +184,21 @@ export function ListaUsuarios() {
                                 : void alternarEstado(usuario)
                         }
                     >
+                        {usuario.activo ? (
+                            <IconoDesactivar className="size-3.5" />
+                        ) : (
+                            <IconoActivar className="size-3.5" />
+                        )}
                         {usuario.activo ? "Desactivar" : "Activar"}
                     </button>
                 ) : (
                     // Activar de vuelta no se confirma: no rompe nada y es la salida del
                     // error. Solo desactivar pregunta.
-                    <span className="ml-3 inline-block py-1 text-xs text-tinta-suave">
+                    <span className="py-1 text-xs text-tinta-suave">
                         No se desactiva: {motivo}
                     </span>
                 )}
-            </>
+            </div>
         );
     }
 
@@ -200,6 +214,7 @@ export function ListaUsuarios() {
                 </div>
 
                 <Link to="/usuarios/nueva" className="boton">
+                    <IconoNueva />
                     Nueva cuenta
                 </Link>
             </div>

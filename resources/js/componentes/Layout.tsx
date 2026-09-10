@@ -33,10 +33,12 @@ function tokenDelCascaron(): string {
 
 function claseDeEnlace({ isActive }: { isActive: boolean }): string {
     return [
-        "inline-block border-b-[3px] py-2.5 text-sm whitespace-nowrap",
+        "relative inline-block py-2.5 text-sm whitespace-nowrap transition-colors",
+        "after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:transition-colors",
+        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sobre-jade",
         isActive
-            ? "border-sobre-jade font-semibold text-sobre-jade"
-            : "border-transparent text-jade-claro hover:text-sobre-jade",
+            ? "font-semibold text-sobre-jade after:bg-sobre-jade"
+            : "text-jade-claro after:bg-transparent hover:text-sobre-jade hover:after:bg-jade-claro/40",
     ].join(" ");
 }
 
@@ -59,64 +61,61 @@ export function Layout() {
 
             <header>
                 <div className="bg-jade-hondo">
-                    <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
-                        {/*
-                            `alt=""`: el nombre del sitio va escrito al lado, dentro del mismo
-                            bloque. Con texto alternativo, un lector de pantalla anunciaría
-                            «AprendeMam AprendeMam».
+                    {/*
+                        UNA FILA DESDE lg, DOS POR DEBAJO, Y UN SOLO CONTENEDOR PARA LAS DOS.
 
-                            `rounded-full` no es adorno: el WebP es el logo circular sobre un
-                            cuadrado blanco, y sin el recorte se ven cuatro esquinas blancas
-                            sobre el verde.
-                        */}
-                        <img
-                            src="/logo.webp"
-                            alt=""
-                            width="36"
-                            height="36"
-                            className="size-9 shrink-0 rounded-full"
-                        />
+                        El DOM va en el orden que se ve desde lg —marca, secciones, salir—
+                        para que el tabulador siga a la vista y no salte a «Salir» antes que a
+                        las secciones. Por debajo de lg el `max-lg:order-1` baja las secciones
+                        a una segunda línea y su `w-full` la ocupa entera.
 
-                        <div className="min-w-0">
-                            <p className="text-xl leading-tight font-bold text-sobre-jade">
-                                Aprende<span className="text-oro">Mam</span>
-                            </p>
-                            <p className="truncate text-xs text-jade-claro">
-                                {sesion.nombre} · {sesion.rol_nombre}
-                            </p>
+                        Con `order` y no duplicando el `<form>` de salir: dos formas serían dos
+                        tokens CSRF y una parada de tabulador de mentira.
+                    */}
+                    <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2.5 px-4 pt-3 pb-2.5 sm:px-6 lg:flex-nowrap lg:gap-x-8">
+                        <div className="flex min-w-0 items-center gap-3">
+                            {/*
+                                `alt=""`: el nombre del sitio va escrito al lado, dentro del
+                                mismo bloque. Con texto alternativo, un lector de pantalla
+                                anunciaría «AprendeMam AprendeMam».
+
+                                `rounded-full` no es adorno: el WebP es el logo circular sobre
+                                un cuadrado blanco, y sin el recorte se ven cuatro esquinas
+                                blancas sobre el verde. El aro le da canto al disco blanco.
+                            */}
+                            <img
+                                src="/logo.webp"
+                                alt=""
+                                width="36"
+                                height="36"
+                                className="size-9 shrink-0 rounded-full ring-1 ring-sobre-jade/25"
+                            />
+
+                            <div className="min-w-0">
+                                <p className="text-xl leading-tight font-bold tracking-tight text-sobre-jade">
+                                    Aprende<span className="text-oro">Mam</span>
+                                </p>
+                                <p className="truncate text-xs text-jade-claro">
+                                    {sesion.nombre} · {sesion.rol_nombre}
+                                </p>
+                            </div>
                         </div>
 
-                        <form
-                            method="POST"
-                            action="/admin/logout"
-                            className="ml-auto shrink-0"
-                        >
-                            <input
-                                type="hidden"
-                                name="_token"
-                                value={tokenDelCascaron()}
-                            />
-                            <button type="submit" className="boton-banda">
-                                Salir
-                            </button>
-                        </form>
-                    </div>
+                        {/*
+                            Se desplaza en horizontal en vez de partirse en dos: con las cinco
+                            secciones de un administrador cabe entera a partir de 375 px.
 
-                    {/*
-                        La fila de secciones se desplaza en horizontal en vez de partirse en
-                        dos: una segunda fila empujaría el contenido hacia abajo justo en la
-                        pantalla donde menos alto sobra. Con las cinco secciones de un
-                        administrador cabe entera a partir de 375 px y solo se desplaza por
-                        debajo de eso.
+                            Sin degradado en el borde a propósito: como casi siempre cabe, un
+                            degradado fijo se lee como si «Mi cuenta» estuviera deshabilitado.
 
-                        Sin degradado en el borde a propósito: como casi siempre cabe, un
-                        degradado fijo se lee como si «Mi cuenta» estuviera deshabilitado.
-                        Cuando de verdad no cabe, la palabra cortada ya avisa de que hay más.
-                    */}
-                    <div>
+                            `self-end` es lo que sostiene el filo de la pestaña activa contra
+                            el canto de la banda cuando la fila es una sola: sin él quedaría a
+                            media altura y dejaría de leerse como una pestaña. El filete separa
+                            identidad de navegación y sobra desde lg, que ya no hay dos filas.
+                        */}
                         <nav
                             aria-label="Secciones del panel"
-                            className="mx-auto max-w-6xl overflow-x-auto px-4 [scrollbar-width:none] sm:px-6 [&::-webkit-scrollbar]:hidden"
+                            className="w-full self-end overflow-x-auto border-t border-sobre-jade/10 max-lg:order-1 [scrollbar-width:none] lg:w-auto lg:shrink-0 lg:border-0 [&::-webkit-scrollbar]:hidden"
                         >
                             <ul className="flex min-w-max gap-x-5">
                                 <li>
@@ -155,6 +154,21 @@ export function Layout() {
                                 </li>
                             </ul>
                         </nav>
+
+                        <form
+                            method="POST"
+                            action="/admin/logout"
+                            className="ml-auto shrink-0"
+                        >
+                            <input
+                                type="hidden"
+                                name="_token"
+                                value={tokenDelCascaron()}
+                            />
+                            <button type="submit" className="boton-banda">
+                                Salir
+                            </button>
+                        </form>
                     </div>
                 </div>
 

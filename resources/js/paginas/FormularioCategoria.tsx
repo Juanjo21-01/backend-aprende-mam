@@ -21,6 +21,7 @@ import {
     obtenerCategoria,
 } from "../api/recursos";
 import { Aviso, Cargando, Exito } from "../componentes/Estados";
+import { IconoVolver } from "../componentes/Iconos";
 import { usePanel } from "../panel";
 import type { Categoria, DatosCategoria } from "../tipos";
 
@@ -231,8 +232,9 @@ export function FormularioCategoria() {
 
                 <Link
                     to="/categorias"
-                    className="enlace text-sm text-tinta-suave"
+                    className="enlace inline-flex items-center gap-1 text-sm text-tinta-suave"
                 >
+                    <IconoVolver className="size-3.5" />
                     Volver a los temas
                 </Link>
             </div>

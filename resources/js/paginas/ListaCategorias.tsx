@@ -15,6 +15,12 @@ import { Link } from "react-router";
 import { borrarCategoria, listarCategorias } from "../api/recursos";
 import { Confirmacion } from "../componentes/Confirmacion";
 import { Aviso, Cargando, Vacio } from "../componentes/Estados";
+import {
+    IconoActualizar,
+    IconoBorrar,
+    IconoEditar,
+    IconoNueva,
+} from "../componentes/Iconos";
 import { usePanel } from "../panel";
 import { useCabeLaTabla } from "../pantalla";
 import type { Categoria } from "../tipos";
@@ -74,22 +80,24 @@ export function ListaCategorias() {
 
     function Acciones({ tema }: { tema: Categoria }) {
         return (
-            <>
-                <Link to={`/categorias/${tema.id}`} className="enlace-accion">
+            <div className="acciones-fila">
+                <Link to={`/categorias/${tema.id}`} className="boton-fila">
+                    <IconoEditar className="size-3.5" />
                     Editar
                 </Link>
 
                 {sesion.es_administrador && (
                     <button
                         type="button"
-                        className="enlace-peligro ml-3"
+                        className="boton-fila-peligro"
                         disabled={ocupado === tema.id}
                         onClick={() => setABorrar(tema)}
                     >
+                        <IconoBorrar className="size-3.5" />
                         Borrar
                     </button>
                 )}
-            </>
+            </div>
         );
     }
 
@@ -105,6 +113,7 @@ export function ListaCategorias() {
                 </div>
 
                 <Link to="/categorias/nuevo" className="boton">
+                    <IconoNueva />
                     Nuevo tema
                 </Link>
             </div>
@@ -117,6 +126,7 @@ export function ListaCategorias() {
                             className="boton-secundario"
                             onClick={() => void cargar()}
                         >
+                            <IconoActualizar />
                             Reintentar
                         </button>
                     }
@@ -133,6 +143,7 @@ export function ListaCategorias() {
                         titulo="Todavía no hay temas"
                         accion={
                             <Link to="/categorias/nuevo" className="boton">
+                                <IconoNueva />
                                 Crear el primero
                             </Link>
                         }

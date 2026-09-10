@@ -20,6 +20,7 @@ import {
     obtenerUsuario,
 } from "../api/recursos";
 import { Aviso, Cargando } from "../componentes/Estados";
+import { IconoVolver } from "../componentes/Iconos";
 import type { DatosUsuario, Rol, Usuario } from "../tipos";
 
 interface Formulario {
@@ -172,8 +173,9 @@ export function FormularioUsuario() {
 
                 <Link
                     to="/usuarios"
-                    className="enlace text-sm text-tinta-suave"
+                    className="enlace inline-flex items-center gap-1 text-sm text-tinta-suave"
                 >
+                    <IconoVolver className="size-3.5" />
                     Volver a las cuentas
                 </Link>
             </div>

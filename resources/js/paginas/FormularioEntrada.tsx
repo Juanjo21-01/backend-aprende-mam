@@ -22,6 +22,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorApi } from '../api/cliente';
 import { actualizarEntrada, crearEntrada, marcarRevision, obtenerEntrada } from '../api/recursos';
 import { Aviso, Cargando, Exito } from '../componentes/Estados';
+import { IconoActivar, IconoDesactivar, IconoVolver } from '../componentes/Iconos';
 import { TecladoDeGrafemas } from '../componentes/TecladoDeGrafemas';
 import { usePanel } from '../panel';
 import type { DatosEntrada, Entrada } from '../tipos';
@@ -240,7 +241,11 @@ export function FormularioEntrada() {
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <h1 className="text-xl font-semibold">{esAlta ? 'Nueva entrada' : 'Editar entrada'}</h1>
 
-                <Link to="/entradas" className="enlace text-sm text-tinta-suave">
+                <Link
+                    to="/entradas"
+                    className="enlace inline-flex items-center gap-1 text-sm text-tinta-suave"
+                >
+                    <IconoVolver className="size-3.5" />
                     Volver al listado
                 </Link>
             </div>
@@ -513,7 +518,12 @@ export function FormularioEntrada() {
                                 disabled={guardando}
                                 onClick={() => void alternarRevision()}
                             >
-                                {entrada.revisado ? 'Quitar la revisión' : 'Marcar como revisada'}
+                                {entrada.revisado ? (
+                            <IconoDesactivar />
+                        ) : (
+                            <IconoActivar />
+                        )}
+                        {entrada.revisado ? 'Quitar la revisión' : 'Marcar como revisada'}
                             </button>
                         ) : (
                             <p className="text-xs text-tinta-suave">Solo el validador lingüístico la marca.</p>

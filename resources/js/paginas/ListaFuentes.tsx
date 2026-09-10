@@ -12,6 +12,13 @@ import { Link } from "react-router";
 import { borrarFuente, listarFuentes } from "../api/recursos";
 import { Confirmacion } from "../componentes/Confirmacion";
 import { Aviso, Cargando, Vacio } from "../componentes/Estados";
+import {
+    IconoAbrir,
+    IconoActualizar,
+    IconoBorrar,
+    IconoEditar,
+    IconoNueva,
+} from "../componentes/Iconos";
 import { usePanel } from "../panel";
 import { useCabeLaTabla } from "../pantalla";
 import type { Fuente } from "../tipos";
@@ -66,22 +73,24 @@ export function ListaFuentes() {
 
     function Acciones({ fuente }: { fuente: Fuente }) {
         return (
-            <>
-                <Link to={`/fuentes/${fuente.id}`} className="enlace-accion">
+            <div className="acciones-fila">
+                <Link to={`/fuentes/${fuente.id}`} className="boton-fila">
+                    <IconoEditar className="size-3.5" />
                     Editar
                 </Link>
 
                 {sesion.es_administrador && (
                     <button
                         type="button"
-                        className="enlace-peligro ml-3"
+                        className="boton-fila-peligro"
                         disabled={ocupada === fuente.id}
                         onClick={() => setABorrar(fuente)}
                     >
+                        <IconoBorrar className="size-3.5" />
                         Borrar
                     </button>
                 )}
-            </>
+            </div>
         );
     }
 
@@ -97,6 +106,7 @@ export function ListaFuentes() {
                 </div>
 
                 <Link to="/fuentes/nueva" className="boton">
+                    <IconoNueva />
                     Nueva fuente
                 </Link>
             </div>
@@ -109,6 +119,7 @@ export function ListaFuentes() {
                             className="boton-secundario"
                             onClick={() => void cargar()}
                         >
+                            <IconoActualizar />
                             Reintentar
                         </button>
                     }
@@ -125,6 +136,7 @@ export function ListaFuentes() {
                         titulo="Todavía no hay fuentes"
                         accion={
                             <Link to="/fuentes/nueva" className="boton">
+                                <IconoNueva />
                                 Registrar la primera
                             </Link>
                         }
@@ -163,6 +175,7 @@ export function ListaFuentes() {
                                                 className="enlace-accion ml-2 text-tinta-suave"
                                             >
                                                 abrir
+                                                <IconoAbrir className="size-3" />
                                             </a>
                                         )}
                                     </td>
@@ -211,9 +224,10 @@ export function ListaFuentes() {
                                             href={fuente.url}
                                             target="_blank"
                                             rel="noreferrer"
-                                            className="enlace"
+                                            className="enlace inline-flex items-center gap-1"
                                         >
                                             abrir
+                                            <IconoAbrir className="size-3" />
                                         </a>
                                     )}
                                 </div>

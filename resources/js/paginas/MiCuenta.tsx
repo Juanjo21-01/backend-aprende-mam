@@ -15,6 +15,7 @@ import { useState } from "react";
 import { ErrorApi } from "../api/cliente";
 import { cambiarContrasenaPropia } from "../api/recursos";
 import { Aviso, Exito } from "../componentes/Estados";
+import { IconoClave } from "../componentes/Iconos";
 import { usePanel } from "../panel";
 
 export function MiCuenta() {
@@ -156,6 +157,7 @@ export function MiCuenta() {
                         className="boton"
                         disabled={guardando}
                     >
+                        <IconoClave />
                         {guardando ? "Guardando…" : "Cambiar la contraseña"}
                     </button>
 

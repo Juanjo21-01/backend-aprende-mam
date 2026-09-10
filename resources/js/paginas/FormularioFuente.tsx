@@ -12,6 +12,7 @@ import { Link, useNavigate, useParams } from "react-router";
 import { ErrorApi } from "../api/cliente";
 import { actualizarFuente, crearFuente, obtenerFuente } from "../api/recursos";
 import { Aviso, Cargando } from "../componentes/Estados";
+import { IconoVolver } from "../componentes/Iconos";
 import { usePanel } from "../panel";
 import type { DatosFuente, Fuente } from "../tipos";
 
@@ -159,8 +160,9 @@ export function FormularioFuente() {
 
                 <Link
                     to="/fuentes"
-                    className="enlace text-sm text-tinta-suave"
+                    className="enlace inline-flex items-center gap-1 text-sm text-tinta-suave"
                 >
+                    <IconoVolver className="size-3.5" />
                     Volver a las fuentes
                 </Link>
             </div>

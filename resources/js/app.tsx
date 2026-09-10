@@ -13,6 +13,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, Navigate, Route, Routes } from "react-router";
 
 import { Vacio } from "./componentes/Estados";
+import { IconoVolver } from "./componentes/Iconos";
 import { Layout } from "./componentes/Layout";
 import { ProveedorPanel, usePanel } from "./panel";
 import { FormularioCategoria } from "./paginas/FormularioCategoria";
@@ -37,7 +38,14 @@ function SoloAdministradores({ children }: { children: ReactNode }) {
 
     if (!sesion.es_administrador) {
         return (
-            <Vacio accion={<Link to="/entradas" className="boton-secundario">Ir a las entradas</Link>}>
+            <Vacio
+                accion={
+                    <Link to="/entradas" className="boton-secundario">
+                        <IconoVolver />
+                        Ir a las entradas
+                    </Link>
+                }
+            >
                 Solo un administrador puede gestionar las cuentas del panel.
             </Vacio>
         );
@@ -48,7 +56,14 @@ function SoloAdministradores({ children }: { children: ReactNode }) {
 
 function NoEncontrado() {
     return (
-        <Vacio accion={<Link to="/entradas" className="boton-secundario">Ir a las entradas</Link>}>
+        <Vacio
+            accion={
+                <Link to="/entradas" className="boton-secundario">
+                    <IconoVolver />
+                    Ir a las entradas
+                </Link>
+            }
+        >
             Esa pantalla del panel no existe.
         </Vacio>
     );

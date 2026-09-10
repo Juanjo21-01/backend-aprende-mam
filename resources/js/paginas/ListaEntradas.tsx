@@ -26,6 +26,16 @@ import {
 } from "../api/recursos";
 import { Confirmacion } from "../componentes/Confirmacion";
 import { Aviso, Cargando, Exito, Vacio } from "../componentes/Estados";
+import {
+    IconoActivar,
+    IconoActualizar,
+    IconoAnterior,
+    IconoBorrar,
+    IconoDesactivar,
+    IconoEditar,
+    IconoNueva,
+    IconoSiguiente,
+} from "../componentes/Iconos";
 import { usePanel } from "../panel";
 import { useCabeLaTabla } from "../pantalla";
 import type { Entrada, FiltrosEntradas, Pagina } from "../tipos";
@@ -98,7 +108,7 @@ function ControlDeRevision({
     return (
         <button
             type="button"
-            className="enlace-accion -my-1 inline-flex items-center gap-2 disabled:opacity-50"
+            className="boton-fila"
             disabled={ocupada}
             onClick={alternar}
             title={
@@ -160,22 +170,24 @@ function AccionesDeEntrada({
     borrar: () => void;
 }) {
     return (
-        <>
-            <Link to={`/entradas/${entrada.id}`} className="enlace-accion">
+        <div className="acciones-fila">
+            <Link to={`/entradas/${entrada.id}`} className="boton-fila">
+                <IconoEditar className="size-3.5" />
                 Editar
             </Link>
 
             {esAdministrador && (
                 <button
                     type="button"
-                    className="enlace-peligro ml-3"
+                    className="boton-fila-peligro"
                     disabled={ocupada}
                     onClick={borrar}
                 >
+                    <IconoBorrar className="size-3.5" />
                     Borrar
                 </button>
             )}
-        </>
+        </div>
     );
 }
 
@@ -458,6 +470,7 @@ export function ListaEntradas() {
                 </div>
 
                 <Link to="/entradas/nueva" className="boton">
+                    <IconoNueva />
                     Nueva entrada
                 </Link>
             </div>
@@ -520,6 +533,7 @@ export function ListaEntradas() {
                             className="boton-secundario"
                             onClick={() => void cargar()}
                         >
+                            <IconoActualizar />
                             Reintentar
                         </button>
                     }
@@ -539,6 +553,7 @@ export function ListaEntradas() {
                             titulo="Todavía no hay entradas"
                             accion={
                                 <Link to="/entradas/nueva" className="boton">
+                                    <IconoNueva />
                                     Cargar la primera
                                 </Link>
                             }
@@ -755,6 +770,7 @@ export function ListaEntradas() {
                         disabled={enLote}
                         onClick={() => void revisarSeleccion(true)}
                     >
+                        <IconoActivar />
                         {enLote ? "Guardando…" : "Marcar como revisadas"}
                     </button>
 
@@ -764,6 +780,7 @@ export function ListaEntradas() {
                         disabled={enLote}
                         onClick={() => void revisarSeleccion(false)}
                     >
+                        <IconoDesactivar />
                         Quitar la revisión
                     </button>
 
@@ -813,6 +830,7 @@ export function ListaEntradas() {
                                 cambiarFiltro("page", String(meta.current_page - 1))
                             }
                         >
+                            <IconoAnterior />
                             Anterior
                         </button>
 
@@ -829,6 +847,7 @@ export function ListaEntradas() {
                             }
                         >
                             Siguiente
+                            <IconoSiguiente />
                         </button>
                     </div>
                 </div>

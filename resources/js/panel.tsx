@@ -14,6 +14,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 
 import { listarCategorias, listarClasesDePalabra, listarFuentes, sesionActual } from './api/recursos';
 import { Aviso, Cargando } from './componentes/Estados';
+import { IconoActualizar } from './componentes/Iconos';
 import type { Categoria, CategoriaGramatical, Fuente, Sesion } from './tipos';
 
 interface Contexto {
@@ -75,6 +76,7 @@ export function ProveedorPanel({ children }: { children: ReactNode }) {
                 <Aviso
                     accion={
                         <button type="button" className="boton-secundario" onClick={() => void cargar()}>
+                            <IconoActualizar />
                             Reintentar
                         </button>
                     }

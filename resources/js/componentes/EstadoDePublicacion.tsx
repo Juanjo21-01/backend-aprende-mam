@@ -25,6 +25,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router";
 
 import { estadoDePublicacion } from "../api/recursos";
+import { IconoActualizar } from "./Iconos";
 import type { EstadoPublicacion } from "../tipos";
 
 const UN_MINUTO = 60_000;
@@ -174,6 +175,7 @@ export function EstadoDePublicacion() {
                     className="boton-secundario px-2 py-1 text-xs"
                     onClick={() => void consultar()}
                 >
+                    <IconoActualizar className="size-3.5" />
                     Actualizar
                 </button>
             </div>

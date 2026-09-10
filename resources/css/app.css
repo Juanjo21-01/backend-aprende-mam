@@ -160,6 +160,19 @@
         outline-offset: 2px;
     }
 
+    /*
+     * El navegador da flecha a un `<button>` y mano a un `<a>`, así que dos controles con la
+     * misma pinta —«Editar» es un enlace y «Borrar» un botón— se comportaban distinto. Va
+     * aquí y no en cada clase para que ningún control nuevo nazca sin ello.
+     *
+     * El `:not(:disabled)` deja pasar el `cursor-not-allowed` de un botón apagado.
+     */
+    button:not(:disabled),
+    [role='button']:not(:disabled),
+    summary {
+        cursor: pointer;
+    }
+
     h1,
     h2,
     h3 {
@@ -380,14 +393,47 @@
     }
 
     /*
-     * ACCIONES DE UNA FILA O DE UNA FICHA: «Editar», «Contraseña», «Desactivar», «abrir».
-     *
-     * `inline-block` con `py-1` no es aire: a 12 px de letra, un enlace en línea mide 16 px de
-     * alto, y el criterio 2.5.8 de WCAG 2.2 pide 24 en un objetivo táctil. Con los cuatro
-     * píxeles de arriba y de abajo llega justo a 24 sin mover nada de sitio.
+     * El «abrir» de una fuente, único enlace que queda con esta clase: sale del panel, así
+     * que parece un enlace y no un botón. El `py-1` lleva el objetivo táctil a los 24 px que
+     * pide el criterio 2.5.8 de WCAG 2.2.
      */
     .enlace-accion {
-        @apply inline-block py-1 text-xs underline-offset-2 transition-colors hover:underline;
+        @apply inline-flex items-center gap-1 py-1 text-xs underline-offset-2 transition-colors hover:underline;
+    }
+
+    /*
+     * Acciones de una fila o de una ficha. Antes eran texto de color y no se leían como
+     * botones; el borde es lo que dice que se pulsan.
+     *
+     * `borde-campo` y no `borde`: el borde es lo único que identifica el control, que es el
+     * caso que mira el criterio 1.4.11 de WCAG y pide 3:1. Alto resultante, 26 px.
+     */
+    .boton-fila {
+        @apply inline-flex items-center gap-1.5 rounded-md border border-borde-campo px-2 py-1;
+        @apply text-xs font-medium text-tinta-suave transition-colors;
+        @apply hover:border-jade hover:text-jade;
+        @apply disabled:cursor-not-allowed disabled:opacity-50;
+        @apply disabled:hover:border-borde-campo disabled:hover:text-tinta-suave;
+    }
+
+    /*
+     * Borrar, y solo borrar. El borde va al 70 % —quince filas de rojo pleno son una pared—
+     * y sigue por encima de 3:1; al pasar por encima sube a alerta entero.
+     */
+    .boton-fila-peligro {
+        @apply inline-flex items-center gap-1.5 rounded-md border border-alerta/70 px-2 py-1;
+        @apply text-xs font-medium text-alerta transition-colors;
+        @apply hover:border-alerta hover:bg-alerta/10;
+        @apply disabled:cursor-not-allowed disabled:opacity-50;
+        @apply disabled:hover:border-alerta/70 disabled:hover:bg-transparent;
+    }
+
+    /*
+     * La celda o el pie de ficha donde viven. `md:justify-end` y no `justify-end`: la tabla
+     * se dibuja desde 768 px y la ficha por debajo, y en la ficha van a la izquierda.
+     */
+    .acciones-fila {
+        @apply flex flex-wrap items-center gap-2 md:justify-end;
     }
 
     /*
@@ -404,13 +450,6 @@
      */
     .casilla {
         @apply -m-2 inline-flex cursor-pointer items-center gap-2 p-2;
-    }
-
-    /* Borrar, y solo borrar: la única acción del panel que no se puede deshacer. */
-    .enlace-peligro {
-        @apply inline-block py-1 text-xs text-alerta underline-offset-2 transition-colors;
-        @apply hover:underline;
-        @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:no-underline;
     }
 
     /*
