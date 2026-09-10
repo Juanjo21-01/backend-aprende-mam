@@ -247,9 +247,9 @@ export function FormularioCategoria() {
                                 {corregido && (
                                     <p>
                                         El nombre en Mam se escribió «
-                                        <span className="mam">{tecleado}</span>» y quedó
+                                        <span className="mam" lang="mam">{tecleado}</span>» y quedó
                                         guardado como «
-                                        <span className="mam">
+                                        <span className="mam" lang="mam">
                                             {guardado.nombre_mam}
                                         </span>
                                         »: el panel corrige la ortografía al guardar.
@@ -311,7 +311,8 @@ export function FormularioCategoria() {
                         </label>
                         <input
                             id="nombre_mam"
-                            className="campo"
+                            className="campo mam"
+                            lang="mam"
                             value={formulario.nombre_mam}
                             onChange={(evento) =>
                                 cambiar("nombre_mam", evento.target.value)

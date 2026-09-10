@@ -34,6 +34,38 @@
     @vite(['resources/css/app.css', 'resources/js/app.tsx'])
 </head>
 <body class="min-h-screen bg-papel text-tinta antialiased">
+    {{--
+        El alfabeto Mam, para el teclado de grafemas del formulario de entradas.
+
+        Va incrustado y no en un endpoint propio: son 32 pares —282 bytes— que no cambian
+        entre peticiones, porque el catálogo se re-siembra y no se edita desde el panel.
+        Pedirlos al abrir cada formulario sería una petición para nada, y `Alphabet` ya es
+        singleton, así que esto no cuesta ni una consulta de más.
+
+        EL `try` NO ES DEFENSA POR SI ACASO. `Alphabet` lanza a propósito cuando `grafemas`
+        está vacío, y hace bien: sin alfabeto no hay tokenización ni orden, y el tokenizador
+        tiene que fallar a gritos antes que escribir una clave inventada. Pero eso vale para
+        quien va a calcular; aquí solo se va a dibujar un teclado, y dejar que la excepción
+        suba significaría que una instalación recién migrada y sin sembrar responde 500 en el
+        panel entero, que es justamente la pantalla desde la que se entra a arreglarlo. Sin
+        catálogo el teclado no se dibuja y el campo se sigue escribiendo a mano.
+
+        Lo destapó un test: `AutenticacionTest::test_el_panel_se_ve_con_sesion` no siembra
+        grafemas, porque no los necesita.
+
+        Las banderas de `@json` escapan `<`, `>` y `&`. El catálogo es de confianza, pero un
+        `</script>` dentro de un `<script>` cierra la etiqueta antes de tiempo, y que eso no
+        pase no debería depender de que el dato sea bueno.
+    --}}
+    @php
+        try {
+            $alfabetoMam = app(\App\Support\Mam\Alphabet::class)->positions();
+        } catch (\Throwable) {
+            $alfabetoMam = [];
+        }
+    @endphp
+    <script type="application/json" id="alfabeto-mam">@json($alfabetoMam, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)</script>
+
     <div id="panel"></div>
 
     <noscript>

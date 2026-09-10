@@ -22,6 +22,7 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { ErrorApi } from '../api/cliente';
 import { actualizarEntrada, crearEntrada, marcarRevision, obtenerEntrada } from '../api/recursos';
 import { Aviso, Cargando, Exito } from '../componentes/Estados';
+import { TecladoDeGrafemas } from '../componentes/TecladoDeGrafemas';
 import { usePanel } from '../panel';
 import type { DatosEntrada, Entrada } from '../tipos';
 
@@ -47,6 +48,19 @@ const VACIO: Formulario = {
     pagina_fuente: '',
     categorias: [],
 };
+
+/**
+ * La clave de orden, separada en pares.
+ *
+ * Es una cadena de posiciones del alfabeto, dos dígitos por letra: `24310114` son **cuatro**
+ * letras, no ocho, porque los dígrafos y las glotalizadas ocupan una sola posición. De
+ * corrido no hay forma de comprobarla; separada, el editor puede contar los grafemas de su
+ * palabra y ver si el número cuadra. El Manual de Normas le pide que reporte un orden que le
+ * parezca equivocado, y sin poder leerlo no tiene con qué.
+ */
+function enPares(clave: string): string {
+    return clave.replace(/\d{2}/g, '$& ').trimEnd();
+}
 
 function desdeEntrada(entrada: Entrada): Formulario {
     return {
@@ -238,7 +252,7 @@ export function FormularioEntrada() {
                     detalle={
                         corregida && (
                             <p>
-                                Se escribió «<span className="mam">{tecleado}</span>» y el panel lo
+                                Se escribió «<span className="mam" lang="mam">{tecleado}</span>» y el panel lo
                                 corrigió al guardar: el apóstrofo queda en su forma canónica, la «õ»
                                 que llega corrupta de los PDF vuelve a ser «ẍ» y el texto se
                                 normaliza. Es el sistema trabajando bien, no un error.
@@ -247,7 +261,7 @@ export function FormularioEntrada() {
                     }
                 >
                     Se guardó{" "}
-                    <strong className="mam font-semibold">{guardada.mam}</strong>.
+                    <strong className="mam font-semibold" lang="mam">{guardada.mam}</strong>.
                 </Exito>
             )}
 
@@ -263,10 +277,21 @@ export function FormularioEntrada() {
                         <label className="etiqueta" htmlFor="mam">
                             Palabra en Mam
                         </label>
+                        {/*
+                            El único campo del panel que se escribe en Charis SIL, y a cuerpo
+                            mayor que el resto. Es la palabra que se teclea cientos de veces y
+                            la que hay que mirar de cerca: en una sans, la `ẍ` la resuelve una
+                            fuente sustituta y el apóstrofo recto (') se ve igual que el
+                            canónico (’). Aquí se ven distintos, que es de lo que se trata.
+
+                            `spellCheck` apagado: el corrector del navegador no conoce el Mam y
+                            subraya en rojo cada palabra.
+                        */}
                         <input
                             id="mam"
                             ref={campoMam}
-                            className="campo"
+                            className="campo mam text-base"
+                            lang="mam"
                             value={formulario.mam}
                             onChange={(evento) => cambiar('mam', evento.target.value)}
                             required
@@ -274,6 +299,12 @@ export function FormularioEntrada() {
                             autoComplete="off"
                             spellCheck={false}
                         />
+                        <TecladoDeGrafemas
+                            campo={campoMam}
+                            valor={formulario.mam}
+                            alCambiar={(nuevo) => cambiar('mam', nuevo)}
+                        />
+
                         {errorDe('mam') !== undefined && (
                             <p className="error-campo">{errorDe('mam')}</p>
                         )}
@@ -365,7 +396,7 @@ export function FormularioEntrada() {
 
                     <div className="flex flex-wrap gap-x-5 gap-y-2">
                         {categorias.map((tema) => (
-                            <label key={tema.id} className="flex items-center gap-2 text-sm">
+                            <label key={tema.id} className="casilla text-sm">
                                 <input
                                     type="checkbox"
                                     checked={formulario.categorias.includes(tema.id)}
@@ -454,7 +485,20 @@ export function FormularioEntrada() {
                 <div className="tarjeta grid gap-3 p-5 text-sm">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div>
-                            <p className="font-medium">Revisión lingüística</p>
+                            {/* El mismo rombo que marca la fila en el listado, con el mismo
+                                significado. El color no es el canal: la frase de abajo dice
+                                si se publica o no. */}
+                            <p className="flex items-center gap-2 font-medium">
+                                <span
+                                    className={
+                                        entrada.revisado
+                                            ? 'marca-revision'
+                                            : 'marca-revision-hueca'
+                                    }
+                                    aria-hidden="true"
+                                />
+                                Revisión lingüística
+                            </p>
                             <p className="mt-0.5 text-xs text-tinta-suave">
                                 {entrada.revisado
                                     ? `Revisada${entrada.revisado_por != null ? ` por ${entrada.revisado_por.nombre}` : ''}. Se publica.`
@@ -479,17 +523,24 @@ export function FormularioEntrada() {
                     <dl className="grid gap-2 border-t border-borde pt-3 text-xs sm:grid-cols-2">
                         <div>
                             <dt className="text-tinta-suave">Clave de búsqueda</dt>
-                            <dd className="font-mono break-all">{entrada.busqueda}</dd>
+                            {/* Sigue siendo texto en Mam, así que va en Charis y no en
+                                monoespaciada: aquí se comprueba que el saltillo desapareció y
+                                que la `ẍ` sobrevivió. */}
+                            <dd className="mam break-all" lang="mam">{entrada.busqueda}</dd>
                         </div>
                         <div>
                             <dt className="text-tinta-suave">Clave de orden</dt>
-                            <dd className="font-mono break-all">{entrada.orden_alfabetico}</dd>
+                            <dd className="font-mono break-all">
+                                {enPares(entrada.orden_alfabetico)}
+                            </dd>
                         </div>
                     </dl>
 
                     <p className="text-xs text-tinta-suave">
-                        Las calcula el sistema a partir de la palabra en Mam y no se pueden editar. Si
-                        el orden parece equivocado, hay que reportarlo, no corregirlo a mano.
+                        Las calcula el sistema a partir de la palabra en Mam y no se pueden editar. La
+                        clave de orden va por pares: cada uno es la posición de una letra en el
+                        alfabeto, y los dígrafos y las glotalizadas cuentan como una sola. Si el orden
+                        parece equivocado, hay que reportarlo, no corregirlo a mano.
                     </p>
 
                     {entrada.creado_por != null && (

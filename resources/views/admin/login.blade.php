@@ -28,6 +28,8 @@
             --tinta: #1f1c19;
             --tinta-suave: #57504a;
             --borde: #e0dad0;
+            /* El borde de un campo es lo único que dice que hay un control: 3.5:1, no 1.4:1. */
+            --borde-campo: #8f877a;
             --jade: #0f6f63;
             --alerta: #9a3412;
             /* La cenefa es verde oscuro en los dos temas, igual que la banda del panel. */
@@ -41,6 +43,7 @@
                 --tinta: #efeae0;
                 --tinta-suave: #a89f90;
                 --borde: #38332a;
+                --borde-campo: #787060;
                 --jade: #4fb3a4;
                 --alerta: #ea8f6d;
             }
@@ -143,7 +146,7 @@
             font: inherit;
             color: inherit;
             background: var(--papel);
-            border: 1px solid var(--borde);
+            border: 1px solid var(--borde-campo);
             border-radius: 0.5rem;
         }
 

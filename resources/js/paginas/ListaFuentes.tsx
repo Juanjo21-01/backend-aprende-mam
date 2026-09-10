@@ -10,8 +10,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 
 import { borrarFuente, listarFuentes } from "../api/recursos";
+import { Confirmacion } from "../componentes/Confirmacion";
 import { Aviso, Cargando, Vacio } from "../componentes/Estados";
 import { usePanel } from "../panel";
+import { useCabeLaTabla } from "../pantalla";
 import type { Fuente } from "../tipos";
 
 function mensajeDe(fallo: unknown): string {
@@ -20,11 +22,13 @@ function mensajeDe(fallo: unknown): string {
 
 export function ListaFuentes() {
     const { sesion, recargarCatalogos } = usePanel();
+    const cabeLaTabla = useCabeLaTabla();
 
     const [fuentes, setFuentes] = useState<Fuente[] | null>(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [ocupada, setOcupada] = useState<number | null>(null);
+    const [aBorrar, setABorrar] = useState<Fuente | null>(null);
 
     const cargar = useCallback(async (): Promise<void> => {
         setCargando(true);
@@ -44,20 +48,7 @@ export function ListaFuentes() {
     }, [cargar]);
 
     async function borrar(fuente: Fuente): Promise<void> {
-        const cuantas = fuente.total_entradas ?? 0;
-
-        const aviso =
-            cuantas > 0
-                ? `¿Borrar «${fuente.titulo}»?\n\n` +
-                  `${cuantas} entrada(s) la citan y se quedan sin procedencia. La ` +
-                  `trazabilidad bibliográfica es un requisito del proyecto, así que esto no ` +
-                  `es un borrado cualquiera.`
-                : `¿Borrar «${fuente.titulo}»? Esto no se puede deshacer.`;
-
-        if (!window.confirm(aviso)) {
-            return;
-        }
-
+        setABorrar(null);
         setOcupada(fuente.id);
         setError(null);
 
@@ -71,6 +62,27 @@ export function ListaFuentes() {
         } finally {
             setOcupada(null);
         }
+    }
+
+    function Acciones({ fuente }: { fuente: Fuente }) {
+        return (
+            <>
+                <Link to={`/fuentes/${fuente.id}`} className="enlace-accion">
+                    Editar
+                </Link>
+
+                {sesion.es_administrador && (
+                    <button
+                        type="button"
+                        className="enlace-peligro ml-3"
+                        disabled={ocupada === fuente.id}
+                        onClick={() => setABorrar(fuente)}
+                    >
+                        Borrar
+                    </button>
+                )}
+            </>
+        );
     }
 
     return (
@@ -105,15 +117,22 @@ export function ListaFuentes() {
                 </Aviso>
             )}
 
-            <div className="tarjeta overflow-x-auto">
+            <div className="tarjeta">
                 {cargando && fuentes === null ? (
                     <Cargando />
                 ) : fuentes === null || fuentes.length === 0 ? (
-                    <Vacio>
-                        Todavía no hay fuentes. Sin ellas, las entradas quedan sin
-                        procedencia.
+                    <Vacio
+                        titulo="Todavía no hay fuentes"
+                        accion={
+                            <Link to="/fuentes/nueva" className="boton">
+                                Registrar la primera
+                            </Link>
+                        }
+                    >
+                        Sin ellas las entradas quedan sin procedencia, y la trazabilidad
+                        bibliográfica es un requisito del proyecto.
                     </Vacio>
-                ) : (
+                ) : cabeLaTabla ? (
                     <table className="tabla">
                         <thead>
                             <tr>
@@ -122,17 +141,12 @@ export function ListaFuentes() {
                                 <th>Año</th>
                                 <th>Licencia</th>
                                 <th>Entradas</th>
-                                <th className="text-right">
-                                    Acciones
-                                </th>
+                                <th className="text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             {fuentes.map((fuente) => (
-                                <tr
-                                    key={fuente.id}
-                                    className="border-b border-borde last:border-0"
-                                >
+                                <tr key={fuente.id}>
                                     <td>
                                         <Link
                                             to={`/fuentes/${fuente.id}`}
@@ -146,18 +160,14 @@ export function ListaFuentes() {
                                                 href={fuente.url}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="enlace ml-2 text-xs text-tinta-suave"
+                                                className="enlace-accion ml-2 text-tinta-suave"
                                             >
                                                 abrir
                                             </a>
                                         )}
                                     </td>
-                                    <td>
-                                        {fuente.institucion ?? "—"}
-                                    </td>
-                                    <td className="text-tinta-suave">
-                                        {fuente.anio ?? "—"}
-                                    </td>
+                                    <td>{fuente.institucion ?? "—"}</td>
+                                    <td className="text-tinta-suave">{fuente.anio ?? "—"}</td>
                                     <td className="text-tinta-suave">
                                         {fuente.licencia ?? "—"}
                                     </td>
@@ -165,30 +175,85 @@ export function ListaFuentes() {
                                         {fuente.total_entradas ?? 0}
                                     </td>
                                     <td className="text-right whitespace-nowrap">
-                                        <Link
-                                            to={`/fuentes/${fuente.id}`}
-                                            className="enlace text-xs"
-                                        >
-                                            Editar
-                                        </Link>
-
-                                        {sesion.es_administrador && (
-                                            <button
-                                                type="button"
-                                                className="enlace-peligro ml-3"
-                                                disabled={ocupada === fuente.id}
-                                                onClick={() => void borrar(fuente)}
-                                            >
-                                                Borrar
-                                            </button>
-                                        )}
+                                        <Acciones fuente={fuente} />
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                ) : (
+                    <ul className="lista-fichas">
+                        {fuentes.map((fuente) => (
+                            <li key={fuente.id} className="ficha">
+                                <div className="flex items-start justify-between gap-3">
+                                    <Link
+                                        to={`/fuentes/${fuente.id}`}
+                                        className="enlace font-medium"
+                                    >
+                                        {fuente.titulo}
+                                    </Link>
+
+                                    <span className="shrink-0 text-xs text-tinta-suave">
+                                        {fuente.total_entradas ?? 0} entrada(s)
+                                    </span>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-tinta-suave">
+                                    {fuente.institucion !== null && (
+                                        <span>{fuente.institucion}</span>
+                                    )}
+                                    {fuente.anio !== null && <span>{fuente.anio}</span>}
+                                    {fuente.licencia !== null && (
+                                        <span>{fuente.licencia}</span>
+                                    )}
+                                    {fuente.url !== null && (
+                                        <a
+                                            href={fuente.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="enlace"
+                                        >
+                                            abrir
+                                        </a>
+                                    )}
+                                </div>
+
+                                <div className="border-t border-borde pt-2 whitespace-nowrap">
+                                    <Acciones fuente={fuente} />
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 )}
             </div>
+
+            {aBorrar !== null && (
+                <Confirmacion
+                    titulo={`¿Borrar «${aBorrar.titulo}»?`}
+                    textoConfirmar="Borrar la fuente"
+                    peligro
+                    ocupado={ocupada === aBorrar.id}
+                    confirmar={() => void borrar(aBorrar)}
+                    cancelar={() => setABorrar(null)}
+                >
+                    {(aBorrar.total_entradas ?? 0) > 0 ? (
+                        <>
+                            <p>
+                                <strong className="font-semibold text-tinta">
+                                    {aBorrar.total_entradas} entrada(s) la citan
+                                </strong>{" "}
+                                y se quedan sin procedencia.
+                            </p>
+                            <p>
+                                La trazabilidad bibliográfica es un requisito del proyecto, así
+                                que esto no es un borrado cualquiera.
+                            </p>
+                        </>
+                    ) : (
+                        <p>Ninguna entrada la cita todavía. Aun así, no se puede deshacer.</p>
+                    )}
+                </Confirmacion>
+            )}
         </div>
     );
 }

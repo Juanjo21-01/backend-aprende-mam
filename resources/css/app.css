@@ -66,6 +66,21 @@
     --color-borde: #e0dad0;
 
     /*
+     * EL BORDE DE UN CONTROL NO ES EL DE UN FILETE.
+     *
+     * `--color-borde` da 1.39:1 contra la tarjeta. Para separar filas o cerrar una tarjeta
+     * está bien —son adorno estructural y el criterio 1.4.11 de WCAG no los mira—, pero el
+     * fondo de un campo (`papel`) y el de la tarjeta que lo contiene se diferencian en
+     * 1.02:1, o sea nada: en un campo de formulario **ese borde es lo único que dice que ahí
+     * hay un control**, y entonces 1.4.11 sí lo mira y pide 3:1.
+     *
+     * Medido: 3.55:1 contra tarjeta, 3.46 contra papel y 3.18 contra papel-hondo en claro;
+     * 3.55 / 3.82 / 3.31 en oscuro. Lo usan `.campo`, `.boton-secundario`, `.tecla-grafema` y
+     * el rombo sin rellenar. Todo lo demás sigue con `--color-borde`.
+     */
+    --color-borde-campo: #8f877a;
+
+    /*
      * LA BANDA NO CAMBIA CON EL TEMA, y los tres tonos que viven sobre ella tampoco.
      *
      * `--color-jade-hondo` es el fondo de la cabecera y de la cenefa; `--color-sobre-jade`
@@ -97,6 +112,7 @@
     --color-oro-hondo: #90610c;
 
     --color-alerta: #9a3412;
+    --color-alerta-hover: #7a2a0e;
 }
 
 /*
@@ -115,6 +131,7 @@
         --color-tinta: #efeae0;
         --color-tinta-suave: #a89f90;
         --color-borde: #38332a;
+        --color-borde-campo: #787060;
 
         /* `jade-hondo`, `sobre-jade` y `jade-claro` no se tocan: ver el comentario de la
            banda, arriba. */
@@ -125,6 +142,7 @@
         --color-oro-hondo: #d99a1e;
 
         --color-alerta: #ea8f6d;
+        --color-alerta-hover: #f2a68a;
     }
 }
 
@@ -150,6 +168,17 @@
 
     body {
         text-wrap: pretty;
+    }
+
+    /*
+     * Las casillas del panel. `accent-color` las pinta con el jade de la marca sin sustituir
+     * el control nativo por un div: un control de verdad trae gratis el foco, el teclado, el
+     * estado indeterminado y lo que sepa hacer el lector de pantalla de cada quien.
+     */
+    input[type='checkbox'] {
+        accent-color: var(--color-jade);
+        width: 1rem;
+        height: 1rem;
     }
 
     /*
@@ -227,7 +256,7 @@
      * que es lo correcto: el nombre completo sigue estando al desplegarlo.
      */
     .campo {
-        @apply w-full min-w-0 rounded-lg border border-borde bg-papel px-3 py-2 text-sm text-tinta;
+        @apply w-full min-w-0 rounded-lg border border-borde-campo bg-papel px-3 py-2 text-sm text-tinta;
         @apply placeholder:text-tinta-suave;
         @apply focus:outline-2 focus:outline-offset-1 focus:outline-jade;
     }
@@ -249,10 +278,10 @@
     }
 
     .boton-secundario {
-        @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-borde bg-tarjeta px-3 py-2;
+        @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-borde-campo bg-tarjeta px-3 py-2;
         @apply text-sm font-medium text-tinta transition-colors;
         @apply hover:border-jade hover:text-jade;
-        @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-borde disabled:hover:text-tinta;
+        @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-borde-campo disabled:hover:text-tinta;
     }
 
     /*
@@ -325,6 +354,24 @@
     }
 
     /*
+     * LO QUE ES UNA TABLA EN ESCRITORIO Y UNA LISTA DE FICHAS EN EL TELÉFONO.
+     *
+     * Va dentro de una `.tarjeta`, que pone el borde y las esquinas: aquí solo el filete
+     * entre fichas y el respiro de cada una. Una fila de siete columnas no se lee en 375 px
+     * por mucho que se desplace de lado, que es lo que hacía antes.
+     *
+     * Cuál de las dos se dibuja lo decide `useEsEscritorio()`, no el CSS. El porqué está en
+     * `resources/js/pantalla.ts`.
+     */
+    .lista-fichas {
+        @apply divide-y divide-borde;
+    }
+
+    .ficha {
+        @apply grid gap-2 px-4 py-3;
+    }
+
+    /*
      * Enlace o botón de texto dentro de una frase o de una fila. El tamaño y el color los
      * pone quien lo usa: esto solo aporta el subrayado al pasar por encima.
      */
@@ -332,10 +379,65 @@
         @apply underline-offset-2 transition-colors hover:underline;
     }
 
+    /*
+     * ACCIONES DE UNA FILA O DE UNA FICHA: «Editar», «Contraseña», «Desactivar», «abrir».
+     *
+     * `inline-block` con `py-1` no es aire: a 12 px de letra, un enlace en línea mide 16 px de
+     * alto, y el criterio 2.5.8 de WCAG 2.2 pide 24 en un objetivo táctil. Con los cuatro
+     * píxeles de arriba y de abajo llega justo a 24 sin mover nada de sitio.
+     */
+    .enlace-accion {
+        @apply inline-block py-1 text-xs underline-offset-2 transition-colors hover:underline;
+    }
+
+    /*
+     * Envoltorio de una casilla.
+     *
+     * Una casilla de 16 px es un objetivo de 16 px, y el criterio 2.5.8 de WCAG 2.2 pide 24.
+     * Agrandarla a 24 la dejaría enorme al lado de una tabla de 12 px, así que lo que crece es
+     * el área de pulsación y no el dibujo: `p-2` la lleva a 32 px y `-m-2` devuelve el hueco,
+     * de modo que la fila mide lo mismo que antes.
+     *
+     * Va en una `<label>` a propósito. La etiqueta es lo que da nombre a la casilla y lo que
+     * hace que pulsar el texto de al lado también la marque; envolver con un `<div>` daría el
+     * área pero no el nombre.
+     */
+    .casilla {
+        @apply -m-2 inline-flex cursor-pointer items-center gap-2 p-2;
+    }
+
     /* Borrar, y solo borrar: la única acción del panel que no se puede deshacer. */
     .enlace-peligro {
-        @apply text-xs text-alerta underline-offset-2 transition-colors hover:underline;
+        @apply inline-block py-1 text-xs text-alerta underline-offset-2 transition-colors;
+        @apply hover:underline;
         @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:no-underline;
+    }
+
+    /*
+     * El botón que confirma un borrado, dentro del diálogo y en ningún otro sitio. Papel
+     * sobre alerta da 7.1:1 en claro y 7.7:1 en oscuro; el hover aclara u oscurece según el
+     * tema, por el mismo motivo que `.boton` (ver `--color-jade-hover`).
+     */
+    .boton-peligro {
+        @apply inline-flex items-center justify-center gap-1.5 rounded-lg bg-alerta px-3 py-2;
+        @apply text-sm font-medium text-papel transition-colors;
+        @apply hover:bg-alerta-hover;
+        @apply disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-alerta;
+    }
+
+    /*
+     * DIÁLOGO DE CONFIRMACIÓN.
+     *
+     * `<dialog>` nativo: de ahí salen gratis el atrapado del foco, el cierre con Escape y el
+     * fondo inerte, que a mano son cien líneas y casi siempre quedan mal.
+     *
+     * `100dvh` y no `100vh`: en un teléfono, la barra del navegador se recoge al desplazar y
+     * `vh` cuenta la ventana sin recoger, así que el diálogo se salía por abajo y el botón de
+     * confirmar quedaba fuera de la pantalla.
+     */
+    .dialogo {
+        @apply m-auto w-[min(28rem,calc(100vw-2rem))] max-h-[calc(100dvh-2rem)] overflow-y-auto;
+        @apply rounded-xl border border-borde bg-tarjeta p-5 text-tinta;
     }
 
     /*
@@ -357,6 +459,21 @@
     }
 
     /*
+     * Una tecla del teclado de grafemas.
+     *
+     * 40 px de lado: es una tecla y se pulsa con el dedo. El saltillo suelto es un apóstrofo
+     * de nada, así que el área de pulsación la pone la tecla y no el glifo.
+     *
+     * El fondo es `papel-hondo` y no `tarjeta`: van sobre la tarjeta del formulario, y hundir
+     * la tecla en vez de levantarla las separa del campo sin añadir una sombra.
+     */
+    .tecla-grafema {
+        @apply inline-flex h-10 min-w-10 items-center justify-center rounded-lg px-2;
+        @apply border border-borde-campo bg-papel-hondo text-base leading-none text-tinta;
+        @apply transition-colors hover:border-jade hover:text-jade;
+    }
+
+    /*
      * LA MARCA DE REVISIÓN.
      *
      * El rombo dorado de `RotuloSeccion` del sitio público, reducido a un elemento y
@@ -375,6 +492,12 @@
     }
 
     .marca-revision-hueca {
-        @apply inline-block size-2 shrink-0 rotate-45 border border-borde;
+        @apply inline-block size-2 shrink-0 rotate-45 border border-borde-campo;
     }
+}
+
+/* El velo del diálogo. Fuera de `@layer components` porque `@apply` no funciona sobre
+   `::backdrop`. */
+.dialogo::backdrop {
+    background-color: rgb(0 0 0 / 0.45);
 }

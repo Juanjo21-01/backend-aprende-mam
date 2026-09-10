@@ -1,7 +1,7 @@
 /**
  * Listado de entradas: buscar, filtrar, revisar y borrar.
  *
- * Tres cosas que no son cosméticas:
+ * Cuatro cosas que no son cosméticas:
  *
  * - **Los filtros viven en la URL.** Recargar, volver atrás o dejar el navegador abierto en
  *   la página 7 de «sin revisar» sigue funcionando. Revisando seis mil entradas eso deja de
@@ -11,6 +11,8 @@
  *   resultado equivocado que además parecería correcto.
  * - **La selección se limpia al cambiar de filtro o de página.** Firmar la revisión de
  *   entradas que ya no se están viendo es exactamente lo que no debe poder pasar.
+ * - **Tabla a partir de 768 px, fichas por debajo**, y se dibuja una sola de las dos. El
+ *   porqué de decidirlo en JavaScript y no escondiendo una con CSS está en `pantalla.ts`.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -22,8 +24,10 @@ import {
     marcarRevision,
     marcarRevisionEnLote,
 } from "../api/recursos";
+import { Confirmacion } from "../componentes/Confirmacion";
 import { Aviso, Cargando, Exito, Vacio } from "../componentes/Estados";
 import { usePanel } from "../panel";
+import { useCabeLaTabla } from "../pantalla";
 import type { Entrada, FiltrosEntradas, Pagina } from "../tipos";
 import { SIN_ASIGNAR } from "../tipos";
 
@@ -42,9 +46,143 @@ function comoFiltro(valor: string): FiltrosEntradas["categoria"] {
     return valor === SIN_ASIGNAR ? SIN_ASIGNAR : Number(valor);
 }
 
+/**
+ * El estado de revisión: un rombo y la palabra.
+ *
+ * El rombo es el de la cenefa y carga el único significado que el oro tiene en el panel:
+ * revisada, o sea, esto lo va a ver un estudiante. «Sin revisar» es el mismo rombo sin
+ * rellenar y no un hueco, para que la columna no baile de una fila a otra y se pueda recorrer
+ * con la vista.
+ *
+ * El color no es el canal: el oro sobre papel da 2.9:1 y no pasa AA. Quien no lo distinga
+ * sigue leyendo «Revisada», que es donde está la información. Por eso el rombo va
+ * `aria-hidden`.
+ */
+function MarcaDeRevision({ revisado }: { revisado: boolean }) {
+    return (
+        <>
+            <span
+                className={revisado ? "marca-revision" : "marca-revision-hueca"}
+                aria-hidden="true"
+            />
+            <span className={revisado ? undefined : "text-tinta-suave"}>
+                {revisado ? "Revisada" : "Sin revisar"}
+            </span>
+        </>
+    );
+}
+
+/**
+ * Solo el validador lingüístico firma revisiones, así que a un editor esto se le enseña y no
+ * se le ofrece: para él es un dato, no un interruptor.
+ */
+function ControlDeRevision({
+    entrada,
+    puedeFirmar,
+    ocupada,
+    alternar,
+}: {
+    entrada: Entrada;
+    puedeFirmar: boolean;
+    ocupada: boolean;
+    alternar: () => void;
+}) {
+    if (!puedeFirmar) {
+        return (
+            <span className="inline-flex items-center gap-2 text-xs">
+                <MarcaDeRevision revisado={entrada.revisado} />
+            </span>
+        );
+    }
+
+    return (
+        <button
+            type="button"
+            className="enlace-accion -my-1 inline-flex items-center gap-2 disabled:opacity-50"
+            disabled={ocupada}
+            onClick={alternar}
+            title={
+                entrada.revisado
+                    ? "Quitar la revisión la saca de la publicación"
+                    : "Marcarla la incluye en la próxima publicación"
+            }
+        >
+            <MarcaDeRevision revisado={entrada.revisado} />
+        </button>
+    );
+}
+
+/**
+ * La clase de palabra, abreviada, en la tabla.
+ *
+ * Va en `<abbr>` y no en un `<span title>`: es el elemento que existe para esto y el único
+ * que los lectores de pantalla anuncian de verdad. Un `title` suelto no lo lee casi ninguno,
+ * y en una pantalla táctil no hay forma de sacarlo.
+ *
+ * En la ficha del teléfono no se usa: ahí hay sitio para el nombre entero, y «Sustantivo»
+ * no necesita explicación.
+ */
+function ClaseDePalabra({ entrada }: { entrada: Entrada }) {
+    const clase = entrada.categoria_gramatical;
+
+    if (clase == null) {
+        return <span>—</span>;
+    }
+
+    return <abbr title={clase.nombre}>{clase.abreviatura}</abbr>;
+}
+
+function TemasDeEntrada({ entrada }: { entrada: Entrada }) {
+    if (entrada.categorias === undefined || entrada.categorias.length === 0) {
+        return <span className="text-tinta-suave">—</span>;
+    }
+
+    return (
+        <span className="flex flex-wrap gap-1">
+            {entrada.categorias.map((tema) => (
+                <span key={tema.id} className="chip-tema">
+                    {tema.nombre_es}
+                </span>
+            ))}
+        </span>
+    );
+}
+
+function AccionesDeEntrada({
+    entrada,
+    esAdministrador,
+    ocupada,
+    borrar,
+}: {
+    entrada: Entrada;
+    esAdministrador: boolean;
+    ocupada: boolean;
+    borrar: () => void;
+}) {
+    return (
+        <>
+            <Link to={`/entradas/${entrada.id}`} className="enlace-accion">
+                Editar
+            </Link>
+
+            {esAdministrador && (
+                <button
+                    type="button"
+                    className="enlace-peligro ml-3"
+                    disabled={ocupada}
+                    onClick={borrar}
+                >
+                    Borrar
+                </button>
+            )}
+        </>
+    );
+}
+
 export function ListaEntradas() {
     const { sesion, categorias, fuentes } = usePanel();
     const [params, setParams] = useSearchParams();
+    const cabeLaTabla = useCabeLaTabla();
 
     const buscar = params.get("buscar") ?? "";
     const revisado = params.get("revisado") ?? "";
@@ -54,7 +192,7 @@ export function ListaEntradas() {
     const pagina = Number(params.get("page") ?? "1");
 
     // El buscador se teclea aquí y llega a la URL con retardo: sin eso, escribir una palabra
-    // de cinco letras dispara cinco consultas y pinta cinco veces la tabla.
+    // de cinco letras dispara cinco consultas y pinta cinco veces la lista.
     const [texto, setTexto] = useState(buscar);
     const [resultado, setResultado] = useState<Pagina<Entrada> | null>(null);
     const [cargando, setCargando] = useState(true);
@@ -63,6 +201,7 @@ export function ListaEntradas() {
     const [ocupada, setOcupada] = useState<number | null>(null);
     const [seleccion, setSeleccion] = useState<number[]>([]);
     const [enLote, setEnLote] = useState(false);
+    const [aBorrar, setABorrar] = useState<Entrada | null>(null);
 
     const casilleroDeTodas = useRef<HTMLInputElement>(null);
 
@@ -79,7 +218,7 @@ export function ListaEntradas() {
             }
 
             // Cambiar un filtro devuelve a la primera página: quedarse en la 7 de un
-            // resultado que ahora tiene dos páginas muestra una tabla vacía sin decir por qué.
+            // resultado que ahora tiene dos páginas muestra una lista vacía sin decir por qué.
             if (clave !== "page") {
                 siguiente.delete("page");
             }
@@ -215,10 +354,7 @@ export function ListaEntradas() {
     }
 
     async function borrar(entrada: Entrada): Promise<void> {
-        if (!window.confirm(`¿Borrar «${entrada.mam}»? Esto no se puede deshacer.`)) {
-            return;
-        }
-
+        setABorrar(null);
         setOcupada(entrada.id);
         setError(null);
 
@@ -239,6 +375,77 @@ export function ListaEntradas() {
     // Solo el validador lingüístico firma revisiones, así que a un editor no se le ofrecen
     // las casillas: no tendría qué hacer con ellas.
     const puedeFirmar = sesion.es_administrador;
+    const conBarraDeLote = puedeFirmar && seleccion.length > 0;
+
+    /** Los que se pliegan en el teléfono. El buscador no cuenta: se queda siempre a la vista. */
+    const filtrosActivos = [revisado, categoria, fuente].filter(
+        (valor) => valor !== "",
+    ).length;
+
+    const selectores = (
+        <div className="grid gap-3 md:grid-cols-3">
+            <div>
+                <label className="etiqueta" htmlFor="revisado">
+                    Revisión
+                </label>
+                <select
+                    id="revisado"
+                    className="campo"
+                    value={revisado}
+                    onChange={(evento) => cambiarFiltro("revisado", evento.target.value)}
+                >
+                    <option value="">Todas</option>
+                    <option value="1">Revisadas</option>
+                    <option value="0">Sin revisar</option>
+                </select>
+            </div>
+
+            <div>
+                <label className="etiqueta" htmlFor="categoria">
+                    Tema
+                </label>
+                <select
+                    id="categoria"
+                    className="campo"
+                    value={categoria}
+                    onChange={(evento) => cambiarFiltro("categoria", evento.target.value)}
+                >
+                    <option value="">Todos</option>
+                    {/* Antes de publicar, toda entrada debería llevar tema. Esta opción es la
+                        única forma de encontrar las que no lo tienen. */}
+                    <option value={SIN_ASIGNAR}>Sin tema</option>
+                    {categorias.map((tema) => (
+                        <option key={tema.id} value={tema.id}>
+                            {tema.nombre_es}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
+            <div>
+                <label className="etiqueta" htmlFor="fuente">
+                    Fuente
+                </label>
+                <select
+                    id="fuente"
+                    className="campo"
+                    value={fuente}
+                    onChange={(evento) => cambiarFiltro("fuente", evento.target.value)}
+                >
+                    <option value="">Todas</option>
+                    <option value={SIN_ASIGNAR}>Sin fuente</option>
+                    {fuentes.map((libro) => (
+                        <option key={libro.id} value={libro.id}>
+                            {libro.titulo}
+                        </option>
+                    ))}
+                </select>
+                <p className="ayuda">
+                    Para revisar de un tirón lo que acabás de transcribir de un libro.
+                </p>
+            </div>
+        </div>
+    );
 
     return (
         <div className="grid gap-5">
@@ -255,8 +462,8 @@ export function ListaEntradas() {
                 </Link>
             </div>
 
-            <div className="tarjeta grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="sm:col-span-2">
+            <div className="tarjeta grid gap-3 p-4">
+                <div>
                     <label className="etiqueta" htmlFor="buscar">
                         Buscar
                     </label>
@@ -275,72 +482,34 @@ export function ListaEntradas() {
                     </p>
                 </div>
 
-                <div>
-                    <label className="etiqueta" htmlFor="revisado">
-                        Revisión
-                    </label>
-                    <select
-                        id="revisado"
-                        className="campo"
-                        value={revisado}
-                        onChange={(evento) =>
-                            cambiarFiltro("revisado", evento.target.value)
-                        }
-                    >
-                        <option value="">Todas</option>
-                        <option value="1">Revisadas</option>
-                        <option value="0">Sin revisar</option>
-                    </select>
-                </div>
+                {/*
+                    En el teléfono los tres selectores se pliegan y el buscador se queda
+                    fuera: el buscador se usa en cada consulta, y tres desplegables abiertos
+                    empujan la primera palabra fuera de la pantalla. El resumen dice cuántos
+                    filtros hay puestos, para que plegarlos no sea esconderlos.
+                */}
+                {cabeLaTabla ? (
+                    selectores
+                ) : (
+                    <details className="group">
+                        <summary className="flex cursor-pointer list-none items-center gap-2 py-1 text-sm font-medium [&::-webkit-details-marker]:hidden">
+                            Filtros
+                            {filtrosActivos > 0 && (
+                                <span className="chip-nota">
+                                    {filtrosActivos} activo{filtrosActivos > 1 ? "s" : ""}
+                                </span>
+                            )}
+                            <span className="ml-auto text-xs font-normal text-tinta-suave group-open:hidden">
+                                Mostrar
+                            </span>
+                            <span className="ml-auto hidden text-xs font-normal text-tinta-suave group-open:inline">
+                                Ocultar
+                            </span>
+                        </summary>
 
-                <div>
-                    <label className="etiqueta" htmlFor="categoria">
-                        Tema
-                    </label>
-                    <select
-                        id="categoria"
-                        className="campo"
-                        value={categoria}
-                        onChange={(evento) =>
-                            cambiarFiltro("categoria", evento.target.value)
-                        }
-                    >
-                        <option value="">Todos</option>
-                        {/* Antes de publicar, toda entrada debería llevar tema. Esta opción
-                            es la única forma de encontrar las que no lo tienen. */}
-                        <option value={SIN_ASIGNAR}>Sin tema</option>
-                        {categorias.map((tema) => (
-                            <option key={tema.id} value={tema.id}>
-                                {tema.nombre_es}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-
-                <div className="sm:col-span-2">
-                    <label className="etiqueta" htmlFor="fuente">
-                        Fuente
-                    </label>
-                    <select
-                        id="fuente"
-                        className="campo"
-                        value={fuente}
-                        onChange={(evento) =>
-                            cambiarFiltro("fuente", evento.target.value)
-                        }
-                    >
-                        <option value="">Todas</option>
-                        <option value={SIN_ASIGNAR}>Sin fuente</option>
-                        {fuentes.map((libro) => (
-                            <option key={libro.id} value={libro.id}>
-                                {libro.titulo}
-                            </option>
-                        ))}
-                    </select>
-                    <p className="ayuda">
-                        Para revisar de un tirón lo que acabás de transcribir de un libro.
-                    </p>
-                </div>
+                        <div className="mt-3">{selectores}</div>
+                    </details>
+                )}
             </div>
 
             {error !== null && (
@@ -361,11 +530,224 @@ export function ListaEntradas() {
 
             {hecho !== null && <Exito>{hecho}</Exito>}
 
-            {puedeFirmar && seleccion.length > 0 && (
-                <div className="tarjeta flex flex-wrap items-center gap-3 px-4 py-3">
-                    <p className="text-sm">
-                        {seleccion.length} seleccionada(s)
-                    </p>
+            <div className="tarjeta">
+                {cargando && resultado === null ? (
+                    <Cargando />
+                ) : visibles.length === 0 ? (
+                    sinFiltros ? (
+                        <Vacio
+                            titulo="Todavía no hay entradas"
+                            accion={
+                                <Link to="/entradas/nueva" className="boton">
+                                    Cargar la primera
+                                </Link>
+                            }
+                        >
+                            Cada palabra conserva su fuente bibliográfica y no sale al sitio
+                            público hasta que alguien la revisa.
+                        </Vacio>
+                    ) : (
+                        <Vacio>Ninguna entrada coincide con estos filtros.</Vacio>
+                    )
+                ) : cabeLaTabla ? (
+                    <table className="tabla">
+                        <thead>
+                            <tr>
+                                {puedeFirmar && (
+                                    <th className="w-8">
+                                        <label className="casilla">
+                                            <input
+                                                ref={casilleroDeTodas}
+                                                type="checkbox"
+                                                checked={
+                                                    seleccion.length === visibles.length &&
+                                                    visibles.length > 0
+                                                }
+                                                onChange={(evento) =>
+                                                    setSeleccion(
+                                                        evento.target.checked
+                                                            ? visibles.map((fila) => fila.id)
+                                                            : [],
+                                                    )
+                                                }
+                                            />
+                                            <span className="sr-only">
+                                                Seleccionar todas las de esta página
+                                            </span>
+                                        </label>
+                                    </th>
+                                )}
+                                <th>Mam</th>
+                                <th>Castellano</th>
+                                <th>Clase</th>
+                                <th>Temas</th>
+                                <th>Revisión</th>
+                                <th className="text-right">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {visibles.map((entrada) => (
+                                <tr key={entrada.id}>
+                                    {puedeFirmar && (
+                                        <td>
+                                            <label className="casilla">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={seleccion.includes(entrada.id)}
+                                                    onChange={() =>
+                                                        alternarSeleccion(entrada.id)
+                                                    }
+                                                />
+                                                <span className="sr-only">
+                                                    Seleccionar {entrada.mam}
+                                                </span>
+                                            </label>
+                                        </td>
+                                    )}
+
+                                    <td>
+                                        <Link
+                                            to={`/entradas/${entrada.id}`}
+                                            className="enlace mam font-bold"
+                                            lang="mam"
+                                        >
+                                            {entrada.mam}
+                                        </Link>
+                                    </td>
+
+                                    <td>{entrada.espanol}</td>
+
+                                    <td className="text-tinta-suave">
+                                        <ClaseDePalabra entrada={entrada} />
+                                    </td>
+
+                                    <td>
+                                        <TemasDeEntrada entrada={entrada} />
+                                    </td>
+
+                                    <td>
+                                        <ControlDeRevision
+                                            entrada={entrada}
+                                            puedeFirmar={puedeFirmar}
+                                            ocupada={ocupada === entrada.id}
+                                            alternar={() => void alternarRevision(entrada)}
+                                        />
+                                    </td>
+
+                                    <td className="text-right whitespace-nowrap">
+                                        <AccionesDeEntrada
+                                            entrada={entrada}
+                                            esAdministrador={sesion.es_administrador}
+                                            ocupada={ocupada === entrada.id}
+                                            borrar={() => setABorrar(entrada)}
+                                        />
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                ) : (
+                    <ul className="lista-fichas">
+                        {puedeFirmar && (
+                            <li className="ficha">
+                                <label className="casilla text-xs text-tinta-suave">
+                                    <input
+                                        ref={casilleroDeTodas}
+                                        type="checkbox"
+                                        checked={
+                                            seleccion.length === visibles.length &&
+                                            visibles.length > 0
+                                        }
+                                        onChange={(evento) =>
+                                            setSeleccion(
+                                                evento.target.checked
+                                                    ? visibles.map((fila) => fila.id)
+                                                    : [],
+                                            )
+                                        }
+                                    />
+                                    Seleccionar las {visibles.length} de esta página
+                                </label>
+                            </li>
+                        )}
+
+                        {visibles.map((entrada) => (
+                            <li key={entrada.id} className="ficha">
+                                <div className="flex items-start gap-3">
+                                    {puedeFirmar && (
+                                        <label className="casilla mt-1">
+                                            <input
+                                                type="checkbox"
+                                                checked={seleccion.includes(entrada.id)}
+                                                onChange={() =>
+                                                    alternarSeleccion(entrada.id)
+                                                }
+                                            />
+                                            <span className="sr-only">
+                                                Seleccionar {entrada.mam}
+                                            </span>
+                                        </label>
+                                    )}
+
+                                    <div className="min-w-0 flex-1">
+                                        <Link
+                                            to={`/entradas/${entrada.id}`}
+                                            className="enlace mam text-base font-bold"
+                                            lang="mam"
+                                        >
+                                            {entrada.mam}
+                                        </Link>
+                                        <p className="text-sm">{entrada.espanol}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-tinta-suave">
+                                    {entrada.categoria_gramatical != null && (
+                                        <span>{entrada.categoria_gramatical.nombre}</span>
+                                    )}
+                                    <TemasDeEntrada entrada={entrada} />
+                                </div>
+
+                                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-borde pt-2">
+                                    <ControlDeRevision
+                                        entrada={entrada}
+                                        puedeFirmar={puedeFirmar}
+                                        ocupada={ocupada === entrada.id}
+                                        alternar={() => void alternarRevision(entrada)}
+                                    />
+
+                                    <div className="whitespace-nowrap">
+                                        <AccionesDeEntrada
+                                            entrada={entrada}
+                                            esAdministrador={sesion.es_administrador}
+                                            ocupada={ocupada === entrada.id}
+                                            borrar={() => setABorrar(entrada)}
+                                        />
+                                    </div>
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+
+            {/*
+                En el teléfono la barra se queda pegada al borde inferior mientras se
+                recorre la lista. Antes iba en el flujo, encima: al bajar a seleccionar la
+                décima entrada, los botones para firmarlas ya se habían quedado fuera de la
+                pantalla.
+
+                `sticky` y no `fixed`: un elemento fijo sale del flujo y hay que reservarle
+                sitio a mano con un relleno inferior adivinado. Con 111 px de barra contra 96
+                de relleno, la paginación se salvaba por nueve píxeles. Pegajoso ocupa su
+                propio hueco y el problema no existe.
+
+                Va después de la lista y no antes porque es lo que se hace al terminar de
+                seleccionar, y porque `sticky bottom-0` solo flota sobre lo que tiene encima.
+            */}
+            {conBarraDeLote && (
+                <div className="tarjeta flex flex-wrap items-center gap-3 px-4 py-3 max-md:sticky max-md:bottom-0 max-md:z-20 max-md:-mx-4 max-md:rounded-none max-md:border-x-0">
+                    <p className="text-sm">{seleccion.length} seleccionada(s)</p>
 
                     <button
                         type="button"
@@ -394,164 +776,6 @@ export function ListaEntradas() {
                     </button>
                 </div>
             )}
-
-            <div className="tarjeta overflow-x-auto">
-                {cargando && resultado === null ? (
-                    <Cargando />
-                ) : visibles.length === 0 ? (
-                    <Vacio>
-                        {sinFiltros
-                            ? "Todavía no hay entradas. La primera se carga con «Nueva entrada»."
-                            : "Ninguna entrada coincide con estos filtros."}
-                    </Vacio>
-                ) : (
-                    <table className="tabla">
-                        <thead>
-                            <tr>
-                                {puedeFirmar && (
-                                    <th className="w-8">
-                                        <input
-                                            ref={casilleroDeTodas}
-                                            type="checkbox"
-                                            aria-label="Seleccionar todas las de esta página"
-                                            checked={
-                                                seleccion.length === visibles.length &&
-                                                visibles.length > 0
-                                            }
-                                            onChange={(evento) =>
-                                                setSeleccion(
-                                                    evento.target.checked
-                                                        ? visibles.map((fila) => fila.id)
-                                                        : [],
-                                                )
-                                            }
-                                        />
-                                    </th>
-                                )}
-                                <th>Mam</th>
-                                <th>Castellano</th>
-                                <th>Clase</th>
-                                <th>Temas</th>
-                                <th>Revisión</th>
-                                <th className="text-right">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {visibles.map((entrada) => (
-                                <tr
-                                    key={entrada.id}
-                                    className="border-b border-borde last:border-0"
-                                >
-                                    {puedeFirmar && (
-                                        <td>
-                                            <input
-                                                type="checkbox"
-                                                aria-label={`Seleccionar ${entrada.mam}`}
-                                                checked={seleccion.includes(entrada.id)}
-                                                onChange={() =>
-                                                    alternarSeleccion(entrada.id)
-                                                }
-                                            />
-                                        </td>
-                                    )}
-
-                                    <td>
-                                        <Link
-                                            to={`/entradas/${entrada.id}`}
-                                            className="enlace font-medium"
-                                        >
-                                            {entrada.mam}
-                                        </Link>
-                                    </td>
-
-                                    <td>
-                                        {entrada.espanol}
-                                    </td>
-
-                                    <td className="text-tinta-suave">
-                                        <span
-                                            title={
-                                                entrada.categoria_gramatical?.nombre ??
-                                                undefined
-                                            }
-                                        >
-                                            {entrada.categoria_gramatical?.abreviatura ??
-                                                "—"}
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        <span className="flex flex-wrap gap-1">
-                                            {entrada.categorias !== undefined &&
-                                            entrada.categorias.length > 0 ? (
-                                                entrada.categorias.map((tema) => (
-                                                    <span key={tema.id} className="chip-tema">
-                                                        {tema.nombre_es}
-                                                    </span>
-                                                ))
-                                            ) : (
-                                                <span className="text-tinta-suave">—</span>
-                                            )}
-                                        </span>
-                                    </td>
-
-                                    <td>
-                                        {puedeFirmar ? (
-                                            <button
-                                                type="button"
-                                                className={`enlace text-xs disabled:opacity-50 ${
-                                                    entrada.revisado
-                                                        ? "text-jade"
-                                                        : "text-tinta-suave"
-                                                }`}
-                                                disabled={ocupada === entrada.id}
-                                                onClick={() => void alternarRevision(entrada)}
-                                                title={
-                                                    entrada.revisado
-                                                        ? "Quitar la revisión la saca de la publicación"
-                                                        : "Marcarla la incluye en la próxima publicación"
-                                                }
-                                            >
-                                                {entrada.revisado
-                                                    ? "Revisada"
-                                                    : "Sin revisar"}
-                                            </button>
-                                        ) : (
-                                            <span
-                                                className={`text-xs ${entrada.revisado ? "text-jade" : "text-tinta-suave"}`}
-                                            >
-                                                {entrada.revisado
-                                                    ? "Revisada"
-                                                    : "Sin revisar"}
-                                            </span>
-                                        )}
-                                    </td>
-
-                                    <td className="text-right whitespace-nowrap">
-                                        <Link
-                                            to={`/entradas/${entrada.id}`}
-                                            className="enlace text-xs"
-                                        >
-                                            Editar
-                                        </Link>
-
-                                        {sesion.es_administrador && (
-                                            <button
-                                                type="button"
-                                                className="enlace-peligro ml-3"
-                                                disabled={ocupada === entrada.id}
-                                                onClick={() => void borrar(entrada)}
-                                            >
-                                                Borrar
-                                            </button>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-            </div>
 
             {meta !== undefined && meta.total > 0 && (
                 <div className="flex flex-wrap items-center justify-between gap-3 text-sm text-tinta-suave">
@@ -608,6 +832,29 @@ export function ListaEntradas() {
                         </button>
                     </div>
                 </div>
+            )}
+
+            {aBorrar !== null && (
+                <Confirmacion
+                    titulo="¿Borrar esta entrada?"
+                    textoConfirmar="Borrar la entrada"
+                    peligro
+                    ocupado={ocupada === aBorrar.id}
+                    confirmar={() => void borrar(aBorrar)}
+                    cancelar={() => setABorrar(null)}
+                >
+                    <p>
+                        <span className="mam font-semibold text-tinta" lang="mam">
+                            {aBorrar.mam}
+                        </span>
+                        {" · "}
+                        {aBorrar.espanol}
+                    </p>
+                    <p>
+                        Esto no se puede deshacer. Si solo querés que deje de salir en el sitio
+                        público, quitale la revisión.
+                    </p>
+                </Confirmacion>
             )}
         </div>
     );

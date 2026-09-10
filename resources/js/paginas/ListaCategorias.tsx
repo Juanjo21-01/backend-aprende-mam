@@ -13,8 +13,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 
 import { borrarCategoria, listarCategorias } from "../api/recursos";
+import { Confirmacion } from "../componentes/Confirmacion";
 import { Aviso, Cargando, Vacio } from "../componentes/Estados";
 import { usePanel } from "../panel";
+import { useCabeLaTabla } from "../pantalla";
 import type { Categoria } from "../tipos";
 
 function mensajeDe(fallo: unknown): string {
@@ -23,11 +25,13 @@ function mensajeDe(fallo: unknown): string {
 
 export function ListaCategorias() {
     const { sesion, recargarCatalogos } = usePanel();
+    const cabeLaTabla = useCabeLaTabla();
 
     const [temas, setTemas] = useState<Categoria[] | null>(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [ocupado, setOcupado] = useState<number | null>(null);
+    const [aBorrar, setABorrar] = useState<Categoria | null>(null);
 
     const cargar = useCallback(async (): Promise<void> => {
         setCargando(true);
@@ -47,15 +51,7 @@ export function ListaCategorias() {
     }, [cargar]);
 
     async function borrar(tema: Categoria): Promise<void> {
-        const aviso =
-            `¿Borrar el tema «${tema.nombre_es}»?\n\n` +
-            `Las ${tema.total_entradas ?? 0} entrada(s) que tiene NO se borran: pierden esta ` +
-            `clasificación y nada más. Los temas que cuelguen de él quedan sueltos.`;
-
-        if (!window.confirm(aviso)) {
-            return;
-        }
-
+        setABorrar(null);
         setOcupado(tema.id);
         setError(null);
 
@@ -75,6 +71,27 @@ export function ListaCategorias() {
         tema.padre_id === null
             ? "—"
             : (temas?.find((otro) => otro.id === tema.padre_id)?.nombre_es ?? "—");
+
+    function Acciones({ tema }: { tema: Categoria }) {
+        return (
+            <>
+                <Link to={`/categorias/${tema.id}`} className="enlace-accion">
+                    Editar
+                </Link>
+
+                {sesion.es_administrador && (
+                    <button
+                        type="button"
+                        className="enlace-peligro ml-3"
+                        disabled={ocupado === tema.id}
+                        onClick={() => setABorrar(tema)}
+                    >
+                        Borrar
+                    </button>
+                )}
+            </>
+        );
+    }
 
     return (
         <div className="grid gap-5">
@@ -108,12 +125,21 @@ export function ListaCategorias() {
                 </Aviso>
             )}
 
-            <div className="tarjeta overflow-x-auto">
+            <div className="tarjeta">
                 {cargando && temas === null ? (
                     <Cargando />
                 ) : temas === null || temas.length === 0 ? (
-                    <Vacio>Todavía no hay temas.</Vacio>
-                ) : (
+                    <Vacio
+                        titulo="Todavía no hay temas"
+                        accion={
+                            <Link to="/categorias/nuevo" className="boton">
+                                Crear el primero
+                            </Link>
+                        }
+                    >
+                        Sin temas, el sitio público no tiene por dónde empezar: son su portada.
+                    </Vacio>
+                ) : cabeLaTabla ? (
                     <table className="tabla">
                         <thead>
                             <tr>
@@ -128,10 +154,7 @@ export function ListaCategorias() {
                         </thead>
                         <tbody>
                             {temas.map((tema) => (
-                                <tr
-                                    key={tema.id}
-                                    className="border-b border-borde last:border-0"
-                                >
+                                <tr key={tema.id}>
                                     <td>
                                         <Link
                                             to={`/categorias/${tema.id}`}
@@ -141,7 +164,9 @@ export function ListaCategorias() {
                                             {tema.nombre_es}
                                         </Link>
                                     </td>
-                                    <td>{tema.nombre_mam ?? "—"}</td>
+                                    {/* Es texto en Mam y pasa por el normalizador igual que un
+                                        lema, así que se ve con los mismos trazos. */}
+                                    <td className="mam" lang="mam">{tema.nombre_mam ?? "—"}</td>
                                     <td className="font-mono text-xs text-tinta-suave">
                                         {tema.slug}
                                     </td>
@@ -153,30 +178,68 @@ export function ListaCategorias() {
                                         {tema.total_entradas ?? 0}
                                     </td>
                                     <td className="text-right whitespace-nowrap">
-                                        <Link
-                                            to={`/categorias/${tema.id}`}
-                                            className="enlace text-xs"
-                                        >
-                                            Editar
-                                        </Link>
-
-                                        {sesion.es_administrador && (
-                                            <button
-                                                type="button"
-                                                className="enlace-peligro ml-3"
-                                                disabled={ocupado === tema.id}
-                                                onClick={() => void borrar(tema)}
-                                            >
-                                                Borrar
-                                            </button>
-                                        )}
+                                        <Acciones tema={tema} />
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
+                ) : (
+                    <ul className="lista-fichas">
+                        {temas.map((tema) => (
+                            <li key={tema.id} className="ficha">
+                                <div className="flex items-start justify-between gap-3">
+                                    <Link
+                                        to={`/categorias/${tema.id}`}
+                                        className="enlace font-medium"
+                                    >
+                                        {tema.icono !== null && `${tema.icono} `}
+                                        {tema.nombre_es}
+                                    </Link>
+
+                                    <span className="shrink-0 text-xs text-tinta-suave">
+                                        {tema.total_entradas ?? 0} entrada(s)
+                                    </span>
+                                </div>
+
+                                {tema.nombre_mam !== null && (
+                                    <p className="mam text-sm" lang="mam">{tema.nombre_mam}</p>
+                                )}
+
+                                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-tinta-suave">
+                                    <span className="font-mono">{tema.slug}</span>
+                                    <span>orden {tema.orden}</span>
+                                    {tema.padre_id !== null && (
+                                        <span>dentro de {nombreDelPadre(tema)}</span>
+                                    )}
+                                </div>
+
+                                <div className="border-t border-borde pt-2 whitespace-nowrap">
+                                    <Acciones tema={tema} />
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 )}
             </div>
+
+            {aBorrar !== null && (
+                <Confirmacion
+                    titulo={`¿Borrar el tema «${aBorrar.nombre_es}»?`}
+                    textoConfirmar="Borrar el tema"
+                    peligro
+                    ocupado={ocupado === aBorrar.id}
+                    confirmar={() => void borrar(aBorrar)}
+                    cancelar={() => setABorrar(null)}
+                >
+                    <p>
+                        Las {aBorrar.total_entradas ?? 0} entrada(s) que tiene{" "}
+                        <strong className="font-semibold text-tinta">no se borran</strong>:
+                        pierden esta clasificación y nada más.
+                    </p>
+                    <p>Los temas que cuelguen de él quedan sueltos.</p>
+                </Confirmacion>
+            )}
         </div>
     );
 }

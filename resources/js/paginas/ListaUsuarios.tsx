@@ -23,7 +23,9 @@ import {
     listarUsuarios,
     resetearContrasena,
 } from "../api/recursos";
+import { Confirmacion } from "../componentes/Confirmacion";
 import { Aviso, Cargando, Exito } from "../componentes/Estados";
+import { useCabeLaTabla } from "../pantalla";
 import type { Usuario } from "../tipos";
 
 interface Reseteo {
@@ -38,24 +40,29 @@ function mensajeDe(fallo: unknown): string {
 
 /** Por qué no se puede dar de baja esta cuenta, o `null` si sí se puede. */
 function motivoParaNoDesactivar(usuario: Usuario): string | null {
+    // Fragmentos y no frases: se leen dentro de «No se desactiva: …», donde el motivo es la
+    // parte que hay que ver. Antes vivían en un `title` y en táctil no había forma de sacarlos.
     if (usuario.es_uno_mismo) {
-        return "Es tu propia cuenta.";
+        return "es tu propia cuenta";
     }
 
     if (usuario.es_el_ultimo_administrador) {
-        return "Es el único administrador activo.";
+        return "es el único administrador activo";
     }
 
     return null;
 }
 
 export function ListaUsuarios() {
+    const cabeLaTabla = useCabeLaTabla();
+
     const [usuarios, setUsuarios] = useState<Usuario[] | null>(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [ocupada, setOcupada] = useState<number | null>(null);
     const [reseteo, setReseteo] = useState<Reseteo | null>(null);
     const [hecho, setHecho] = useState<string | null>(null);
+    const [aDesactivar, setADesactivar] = useState<Usuario | null>(null);
 
     const cargar = useCallback(async (): Promise<void> => {
         setCargando(true);
@@ -75,17 +82,7 @@ export function ListaUsuarios() {
     }, [cargar]);
 
     async function alternarEstado(usuario: Usuario): Promise<void> {
-        if (
-            usuario.activo &&
-            !window.confirm(
-                `¿Desactivar la cuenta de ${usuario.nombre}?\n\n` +
-                    `No se borra nada: deja de poder entrar y se cierran sus sesiones ` +
-                    `abiertas. Se puede volver a activar cuando haga falta.`,
-            )
-        ) {
-            return;
-        }
-
+        setADesactivar(null);
         setOcupada(usuario.id);
         setError(null);
         setHecho(null);
@@ -137,6 +134,60 @@ export function ListaUsuarios() {
         }
     }
 
+    function Estado({ usuario }: { usuario: Usuario }) {
+        return (
+            <span
+                className={`text-xs ${usuario.activo ? "text-jade" : "text-tinta-suave"}`}
+            >
+                {usuario.activo ? "Activa" : "Desactivada"}
+            </span>
+        );
+    }
+
+    function Acciones({ usuario }: { usuario: Usuario }) {
+        const motivo = motivoParaNoDesactivar(usuario);
+
+        return (
+            <>
+                <Link to={`/usuarios/${usuario.id}`} className="enlace-accion">
+                    Editar
+                </Link>
+
+                <button
+                    type="button"
+                    className="enlace-accion ml-3 disabled:opacity-50"
+                    disabled={ocupada === usuario.id}
+                    onClick={() =>
+                        setReseteo({ usuario, password: "", confirmacion: "" })
+                    }
+                >
+                    Contraseña
+                </button>
+
+                {motivo === null ? (
+                    <button
+                        type="button"
+                        className="enlace-accion ml-3 disabled:opacity-50"
+                        disabled={ocupada === usuario.id}
+                        onClick={() =>
+                            usuario.activo
+                                ? setADesactivar(usuario)
+                                : void alternarEstado(usuario)
+                        }
+                    >
+                        {usuario.activo ? "Desactivar" : "Activar"}
+                    </button>
+                ) : (
+                    // Activar de vuelta no se confirma: no rompe nada y es la salida del
+                    // error. Solo desactivar pregunta.
+                    <span className="ml-3 inline-block py-1 text-xs text-tinta-suave">
+                        No se desactiva: {motivo}
+                    </span>
+                )}
+            </>
+        );
+    }
+
     return (
         <div className="grid gap-5">
             <div className="flex flex-wrap items-end justify-between gap-3">
@@ -157,10 +208,10 @@ export function ListaUsuarios() {
 
             {hecho !== null && <Exito>{hecho}</Exito>}
 
-            <div className="tarjeta overflow-x-auto">
+            <div className="tarjeta">
                 {cargando && usuarios === null ? (
                     <Cargando />
-                ) : (
+                ) : cabeLaTabla ? (
                     <table className="tabla">
                         <thead>
                             <tr>
@@ -168,94 +219,68 @@ export function ListaUsuarios() {
                                 <th>Correo</th>
                                 <th>Rol</th>
                                 <th>Estado</th>
-                                <th className="text-right">
-                                    Acciones
-                                </th>
+                                <th className="text-right">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {(usuarios ?? []).map((usuario) => {
-                                const motivo = motivoParaNoDesactivar(usuario);
-
-                                return (
-                                    <tr
-                                        key={usuario.id}
-                                        className="border-b border-borde last:border-0"
-                                    >
-                                        <td>
-                                            <Link
-                                                to={`/usuarios/${usuario.id}`}
-                                                className="enlace font-medium"
-                                            >
-                                                {usuario.nombre}
-                                            </Link>
-                                            {usuario.es_uno_mismo && (
-                                                <span className="chip-nota ml-2">vos</span>
-                                            )}
-                                        </td>
-                                        <td className="text-tinta-suave">
-                                            {usuario.correo}
-                                        </td>
-                                        <td>
-                                            {usuario.rol_nombre}
-                                        </td>
-                                        <td>
-                                            <span
-                                                className={`text-xs ${usuario.activo ? "text-jade" : "text-tinta-suave"}`}
-                                            >
-                                                {usuario.activo ? "Activa" : "Desactivada"}
-                                            </span>
-                                        </td>
-                                        <td className="text-right whitespace-nowrap">
-                                            <Link
-                                                to={`/usuarios/${usuario.id}`}
-                                                className="enlace text-xs"
-                                            >
-                                                Editar
-                                            </Link>
-
-                                            <button
-                                                type="button"
-                                                className="enlace ml-3 text-xs disabled:opacity-50"
-                                                disabled={ocupada === usuario.id}
-                                                onClick={() =>
-                                                    setReseteo({
-                                                        usuario,
-                                                        password: "",
-                                                        confirmacion: "",
-                                                    })
-                                                }
-                                            >
-                                                Contraseña
-                                            </button>
-
-                                            {motivo === null ? (
-                                                <button
-                                                    type="button"
-                                                    className="enlace ml-3 text-xs disabled:opacity-50"
-                                                    disabled={ocupada === usuario.id}
-                                                    onClick={() =>
-                                                        void alternarEstado(usuario)
-                                                    }
-                                                >
-                                                    {usuario.activo
-                                                        ? "Desactivar"
-                                                        : "Activar"}
-                                                </button>
-                                            ) : (
-                                                <span
-                                                    className="ml-3 text-xs text-tinta-suave"
-                                                    title={motivo}
-                                                >
-                                                    No se desactiva
-                                                </span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                );
-                            })}
+                            {(usuarios ?? []).map((usuario) => (
+                                <tr key={usuario.id}>
+                                    <td>
+                                        <Link
+                                            to={`/usuarios/${usuario.id}`}
+                                            className="enlace font-medium"
+                                        >
+                                            {usuario.nombre}
+                                        </Link>
+                                        {usuario.es_uno_mismo && (
+                                            <span className="chip-nota ml-2">vos</span>
+                                        )}
+                                    </td>
+                                    <td className="text-tinta-suave">{usuario.correo}</td>
+                                    <td>{usuario.rol_nombre}</td>
+                                    <td>
+                                        <Estado usuario={usuario} />
+                                    </td>
+                                    <td className="text-right whitespace-nowrap">
+                                        <Acciones usuario={usuario} />
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </table>
+                ) : (
+                    <ul className="lista-fichas">
+                        {(usuarios ?? []).map((usuario) => (
+                            <li key={usuario.id} className="ficha">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0">
+                                        <Link
+                                            to={`/usuarios/${usuario.id}`}
+                                            className="enlace font-medium"
+                                        >
+                                            {usuario.nombre}
+                                        </Link>
+                                        {usuario.es_uno_mismo && (
+                                            <span className="chip-nota ml-2">vos</span>
+                                        )}
+                                        <p className="text-sm break-all text-tinta-suave">
+                                            {usuario.correo}
+                                        </p>
+                                    </div>
+
+                                    <span className="shrink-0 text-xs text-tinta-suave">
+                                        {usuario.rol_nombre}
+                                    </span>
+                                </div>
+
+                                <Estado usuario={usuario} />
+
+                                <div className="border-t border-borde pt-2 whitespace-nowrap">
+                                    <Acciones usuario={usuario} />
+                                </div>
+                            </li>
+                        ))}
+                    </ul>
                 )}
             </div>
 
@@ -339,6 +364,22 @@ export function ListaUsuarios() {
                         </button>
                     </div>
                 </form>
+            )}
+
+            {aDesactivar !== null && (
+                <Confirmacion
+                    titulo={`¿Desactivar la cuenta de ${aDesactivar.nombre}?`}
+                    textoConfirmar="Desactivar la cuenta"
+                    ocupado={ocupada === aDesactivar.id}
+                    confirmar={() => void alternarEstado(aDesactivar)}
+                    cancelar={() => setADesactivar(null)}
+                >
+                    <p>
+                        No se borra nada: deja de poder entrar y se cierran sus sesiones
+                        abiertas.
+                    </p>
+                    <p>Se puede volver a activar cuando haga falta.</p>
+                </Confirmacion>
             )}
         </div>
     );

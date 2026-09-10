@@ -45,6 +45,18 @@ export function Layout() {
 
     return (
         <div className="min-h-screen bg-papel text-tinta">
+            {/*
+                Antes del contenido hay siete paradas de tabulador —logo, salir, cinco
+                secciones y la franja de publicación— y se repiten en cada pantalla. Con esto
+                son dos. Solo se ve al recibir el foco, que es cuando sirve.
+            */}
+            <a
+                href="#contenido"
+                className="sr-only rounded-lg focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-30 focus:bg-jade focus:px-4 focus:py-2 focus:text-papel"
+            >
+                Saltar al contenido
+            </a>
+
             <header>
                 <div className="bg-jade-hondo">
                     <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
@@ -151,7 +163,11 @@ export function Layout() {
                 <EstadoDePublicacion />
             </header>
 
-            <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+            <main
+                id="contenido"
+                tabIndex={-1}
+                className="mx-auto max-w-6xl px-4 py-6 focus:outline-none sm:px-6 sm:py-8"
+            >
                 <Outlet />
             </main>
         </div>
