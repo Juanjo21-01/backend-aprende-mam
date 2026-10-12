@@ -6,6 +6,7 @@ namespace App\Observers;
 
 use App\Models\VersionContenido;
 use App\Support\Publishing\PublicationScheduler;
+use Closure;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -23,13 +24,39 @@ use Illuminate\Database\Eloquent\Model;
  * dispararía otra compilación al rato para nada. La intención del documento —que una sesión
  * de carga produzca una sola compilación— la cumple el debounce, no quién incrementa.
  *
- * Para la importación del corpus: envolverla en `withoutEvents()` o apagar
- * `PUBLICACION_HABILITADA`, o serán 6,185 incrementos y otros tantos trabajos encolados por
- * una sola publicación. `DatabaseSeeder` ya usa `WithoutModelEvents`, así que sembrar no
- * mueve nada.
+ * Para la importación del corpus: envolverla en `withoutPublishing()`, o serán 6,185
+ * incrementos y otros tantos trabajos encolados por una sola publicación. `DatabaseSeeder`
+ * ya usa `WithoutModelEvents`, así que sembrar no mueve nada.
  */
 final class PublishableContentObserver
 {
+    /** Contador y no booleano: una llamada anidada no reactiva la publicación al salir. */
+    private static int $silenciado = 0;
+
+    /**
+     * Ejecuta `$callback` sin subir la versión ni programar publicación.
+     *
+     * Existe para la importación en lote, y se prefirió a `Model::withoutEvents()` porque ese
+     * apaga **todos** los observadores, también el de autoría, que no tiene por qué callarse.
+     * Lo que se calla aquí es solo lo que sería trabajo inútil: lo importado nace sin revisar
+     * y no cambia la exportación.
+     *
+     * @template T
+     *
+     * @param  Closure(): T  $callback
+     * @return T
+     */
+    public static function withoutPublishing(Closure $callback): mixed
+    {
+        self::$silenciado++;
+
+        try {
+            return $callback();
+        } finally {
+            self::$silenciado--;
+        }
+    }
+
     public function created(Model $model): void
     {
         $this->registrarCambio();
@@ -47,6 +74,10 @@ final class PublishableContentObserver
 
     private function registrarCambio(): void
     {
+        if (self::$silenciado > 0) {
+            return;
+        }
+
         VersionContenido::incrementar();
 
         PublicationScheduler::schedule();
