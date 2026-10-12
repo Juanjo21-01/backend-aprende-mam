@@ -18,6 +18,13 @@ use LogicException;
  */
 final class Tokenizer
 {
+    /**
+     * Lo único que un lema admite fuera del alfabeto: el espacio de un compuesto (`che’w temb’il`)
+     * y el guion de `t-xilen`. Solo U+0020 y U+002D; un espacio duro o una raya delatan una
+     * transcripción sucia y se reportan como cualquier otro carácter ajeno.
+     */
+    private const LEMMA_SEPARATORS = [' ', '-'];
+
     public function __construct(private readonly Alphabet $alphabet) {}
 
     /** @return list<Grapheme> */
@@ -104,6 +111,25 @@ final class Tokenizer
         }
 
         return $unknown;
+    }
+
+    /**
+     * Caracteres que no pueden estar en un lema: lo que queda fuera del alfabeto, menos los dos
+     * separadores que un lema sí admite. Únicos, en orden de aparición y con la caja original.
+     *
+     * Es la comprobación que le faltaba a `tutz’bil`: la `b` sin saltillo no es letra del Mam, el
+     * tokenizador la dejaba pasar sin posición —como debe, para no reventar un guardado— y el
+     * ordenamiento la convertía en `00` sin que nadie se enterara. Quien carga datos en lote la
+     * consulta antes de guardar y aparta lo que no se pueda escribir con el alfabeto.
+     *
+     * @return list<string>
+     */
+    public function invalidLemmaCharacters(string $lemma): array
+    {
+        return array_values(array_filter(
+            $this->unknownCharacters($lemma),
+            static fn (string $char): bool => ! in_array($char, self::LEMMA_SEPARATORS, true),
+        ));
     }
 
     /**

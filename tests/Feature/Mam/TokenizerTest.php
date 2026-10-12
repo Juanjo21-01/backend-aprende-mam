@@ -181,10 +181,84 @@ final class TokenizerTest extends TestCase
         );
     }
 
+    /**
+     * Lemas que se escriben enteros con el alfabeto y los dos separadores que admite un lema: el
+     * espacio de un compuesto y el guion de `t-xilen`, que es ortografía normal del Mam.
+     *
+     * @return array<string, array{string}>
+     */
+    public static function lemasValidos(): array
+    {
+        return [
+            'una palabra' => ['tutz’b’il'],
+            'dos palabras' => ['che’w temb’il'],
+            'con guion' => ['t-xilen'],
+            'con mayúscula inicial' => ['Ẍi’wil'],
+
+            // Llega corrupta desde el PDF; el normalizador la repara antes de tokenizar.
+            '`õ` por `ẍ`' => ['chuõ'],
+
+            // Saltillo inicial: no hay consonante que glotalizar, es el grafema 32.
+            'saltillo inicial' => ['’aq'],
+        ];
+    }
+
+    #[DataProvider('lemasValidos')]
+    public function test_un_lema_escrito_con_el_alfabeto_no_tiene_caracteres_invalidos(string $lema): void
+    {
+        $this->assertSame([], $this->tokenizer()->invalidLemmaCharacters($lema));
+    }
+
+    /**
+     * Lo que el importador aparta para que alguien lo corrija a mano.
+     *
+     * @return array<string, array{string, list<string>}>
+     */
+    public static function lemasInvalidos(): array
+    {
+        return [
+            // La errata del COLIMAM que llegó a publicarse: la `b` sin saltillo no es una letra
+            // del Mam, y el ordenamiento le asignaba `00` sin que nada avisara.
+            'b sin saltillo' => ['tutz’bil', ['b']],
+
+            // Letras del castellano que el Mam no usa. La `c` y la `h` solo existen dentro de `ch`.
+            'c y v sueltas' => ['vaca', ['v', 'c']],
+            'h suelta' => ['hoja', ['h']],
+            'd' => ['dedo', ['d']],
+            'g' => ['gato', ['g']],
+            'ñ' => ['niño', ['ñ']],
+            'vocal con tilde' => ['café', ['c', 'f', 'é']],
+
+            // Ruido del OCR de archive.org: saltillos convertidos en comillas o asteriscos, `i`
+            // leída como `1`, barras partidas.
+            'comilla de cierre' => ['jte”pata', ['”']],
+            'asterisco' => ['tutz*b’il', ['*']],
+            'dígito' => ['ab’q’1', ['1']],
+            'barra' => ['ab’q/i', ['/']],
+
+            // Separadores que no son los dos admitidos.
+            'tabulador' => ["tlamel\tja", ["\t"]],
+            'espacio duro' => ["tlamel\u{00A0}ja", ["\u{00A0}"]],
+            'raya' => ['t–xilen', ['–']],
+            'puntuación' => ['ja, la.', [',', '.']],
+
+            // Conserva la caja con la que llegó, para que el reporte señale lo que se ve en la fuente.
+            'mayúscula' => ['Bech', ['B']],
+        ];
+    }
+
+    /** @param list<string> $esperados */
+    #[DataProvider('lemasInvalidos')]
+    public function test_un_lema_lista_sus_caracteres_fuera_del_alfabeto(string $lema, array $esperados): void
+    {
+        $this->assertSame($esperados, $this->tokenizer()->invalidLemmaCharacters($lema));
+    }
+
     public function test_la_cadena_vacia_no_produce_tokens(): void
     {
         $this->assertSame([], $this->tokenizer()->tokenize(''));
         $this->assertSame([], $this->tokenizer()->unknownCharacters(''));
+        $this->assertSame([], $this->tokenizer()->invalidLemmaCharacters(''));
     }
 
     /** Sin carácter previo no hay consonante que glotalizar: es el saltillo. */
