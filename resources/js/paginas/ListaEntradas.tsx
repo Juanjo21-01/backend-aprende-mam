@@ -37,7 +37,7 @@ import {
     IconoSiguiente,
 } from "../componentes/Iconos";
 import { usePanel } from "../panel";
-import { useCabeLaTabla } from "../pantalla";
+import { ANCHO_TABLA, useCabeLaTabla } from "../pantalla";
 import type { Entrada, FiltrosEntradas, Pagina } from "../tipos";
 import { SIN_ASIGNAR } from "../tipos";
 
@@ -194,7 +194,7 @@ function AccionesDeEntrada({
 export function ListaEntradas() {
     const { sesion, categorias, fuentes } = usePanel();
     const [params, setParams] = useSearchParams();
-    const cabeLaTabla = useCabeLaTabla();
+    const cabeLaTabla = useCabeLaTabla(ANCHO_TABLA.entradas);
 
     const buscar = params.get("buscar") ?? "";
     const revisado = params.get("revisado") ?? "";
@@ -544,7 +544,7 @@ export function ListaEntradas() {
 
             {hecho !== null && <Exito>{hecho}</Exito>}
 
-            <div className="tarjeta">
+            <div className="tarjeta overflow-x-auto">
                 {cargando && resultado === null ? (
                     <Cargando />
                 ) : visibles.length === 0 ? (
@@ -662,9 +662,12 @@ export function ListaEntradas() {
                         </tbody>
                     </table>
                 ) : (
-                    <ul className="lista-fichas">
+                    <>
+                        {/* Fuera del `<ul>`: no es una entrada, es un mando sobre la lista.
+                            Dentro desplazaba la paridad de la que dependen los filetes de las
+                            dos columnas. */}
                         {puedeFirmar && (
-                            <li className="ficha">
+                            <div className="ficha border-b border-borde">
                                 <label className="casilla text-xs text-tinta-suave">
                                     <input
                                         ref={casilleroDeTodas}
@@ -683,66 +686,68 @@ export function ListaEntradas() {
                                     />
                                     Seleccionar las {visibles.length} de esta página
                                 </label>
-                            </li>
+                            </div>
                         )}
 
-                        {visibles.map((entrada) => (
-                            <li key={entrada.id} className="ficha">
-                                <div className="flex items-start gap-3">
-                                    {puedeFirmar && (
-                                        <label className="casilla mt-1">
-                                            <input
-                                                type="checkbox"
-                                                checked={seleccion.includes(entrada.id)}
-                                                onChange={() =>
-                                                    alternarSeleccion(entrada.id)
-                                                }
-                                            />
-                                            <span className="sr-only">
-                                                Seleccionar {entrada.mam}
-                                            </span>
-                                        </label>
-                                    )}
+                        <ul className="lista-fichas">
+                            {visibles.map((entrada) => (
+                                <li key={entrada.id} className="ficha">
+                                    <div className="flex items-start gap-3">
+                                        {puedeFirmar && (
+                                            <label className="casilla mt-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={seleccion.includes(entrada.id)}
+                                                    onChange={() =>
+                                                        alternarSeleccion(entrada.id)
+                                                    }
+                                                />
+                                                <span className="sr-only">
+                                                    Seleccionar {entrada.mam}
+                                                </span>
+                                            </label>
+                                        )}
 
-                                    <div className="min-w-0 flex-1">
-                                        <Link
-                                            to={`/entradas/${entrada.id}`}
-                                            className="enlace mam text-base font-bold"
-                                            lang="mam"
-                                        >
-                                            {entrada.mam}
-                                        </Link>
-                                        <p className="text-sm">{entrada.espanol}</p>
+                                        <div className="min-w-0 flex-1">
+                                            <Link
+                                                to={`/entradas/${entrada.id}`}
+                                                className="enlace mam text-base font-bold"
+                                                lang="mam"
+                                            >
+                                                {entrada.mam}
+                                            </Link>
+                                            <p className="text-sm">{entrada.espanol}</p>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-tinta-suave">
-                                    {entrada.categoria_gramatical != null && (
-                                        <span>{entrada.categoria_gramatical.nombre}</span>
-                                    )}
-                                    <TemasDeEntrada entrada={entrada} />
-                                </div>
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-tinta-suave">
+                                        {entrada.categoria_gramatical != null && (
+                                            <span>{entrada.categoria_gramatical.nombre}</span>
+                                        )}
+                                        <TemasDeEntrada entrada={entrada} />
+                                    </div>
 
-                                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-borde pt-2">
-                                    <ControlDeRevision
-                                        entrada={entrada}
-                                        puedeFirmar={puedeFirmar}
-                                        ocupada={ocupada === entrada.id}
-                                        alternar={() => void alternarRevision(entrada)}
-                                    />
-
-                                    <div className="whitespace-nowrap">
-                                        <AccionesDeEntrada
+                                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-borde pt-2">
+                                        <ControlDeRevision
                                             entrada={entrada}
-                                            esAdministrador={sesion.es_administrador}
+                                            puedeFirmar={puedeFirmar}
                                             ocupada={ocupada === entrada.id}
-                                            borrar={() => setABorrar(entrada)}
+                                            alternar={() => void alternarRevision(entrada)}
                                         />
+
+                                        <div className="whitespace-nowrap">
+                                            <AccionesDeEntrada
+                                                entrada={entrada}
+                                                esAdministrador={sesion.es_administrador}
+                                                ocupada={ocupada === entrada.id}
+                                                borrar={() => setABorrar(entrada)}
+                                            />
+                                        </div>
                                     </div>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
+                                </li>
+                            ))}
+                        </ul>
+                    </>
                 )}
             </div>
 
@@ -761,7 +766,7 @@ export function ListaEntradas() {
                 seleccionar, y porque `sticky bottom-0` solo flota sobre lo que tiene encima.
             */}
             {conBarraDeLote && (
-                <div className="tarjeta flex flex-wrap items-center gap-3 px-4 py-3 max-md:sticky max-md:bottom-0 max-md:z-20 max-md:-mx-4 max-md:rounded-none max-md:border-x-0">
+                <div className="tarjeta flex flex-wrap items-center gap-3 px-4 py-3 max-[840px]:sticky max-[840px]:bottom-0 max-[840px]:z-20 max-[840px]:-mx-4 max-[840px]:rounded-none max-[840px]:border-x-0">
                     <p className="text-sm">{seleccion.length} seleccionada(s)</p>
 
                     <button
@@ -822,33 +827,38 @@ export function ListaEntradas() {
                             </select>
                         </label>
 
-                        <button
-                            type="button"
-                            className="boton-secundario"
-                            disabled={meta.current_page <= 1}
-                            onClick={() =>
-                                cambiarFiltro("page", String(meta.current_page - 1))
-                            }
-                        >
-                            <IconoAnterior />
-                            Anterior
-                        </button>
+                        {/* Los tres juntos y sin envolver entre ellos: sueltos, a 320 px
+                            «1 de 50» caía en su propio renglón, lejos de los botones a los
+                            que se refiere. */}
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                className="boton-secundario"
+                                disabled={meta.current_page <= 1}
+                                onClick={() =>
+                                    cambiarFiltro("page", String(meta.current_page - 1))
+                                }
+                            >
+                                <IconoAnterior />
+                                Anterior
+                            </button>
 
-                        <span className="text-xs">
-                            {meta.current_page} de {meta.last_page}
-                        </span>
+                            <span className="text-xs">
+                                {meta.current_page} de {meta.last_page}
+                            </span>
 
-                        <button
-                            type="button"
-                            className="boton-secundario"
-                            disabled={meta.current_page >= meta.last_page}
-                            onClick={() =>
-                                cambiarFiltro("page", String(meta.current_page + 1))
-                            }
-                        >
-                            Siguiente
-                            <IconoSiguiente />
-                        </button>
+                            <button
+                                type="button"
+                                className="boton-secundario"
+                                disabled={meta.current_page >= meta.last_page}
+                                onClick={() =>
+                                    cambiarFiltro("page", String(meta.current_page + 1))
+                                }
+                            >
+                                Siguiente
+                                <IconoSiguiente />
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

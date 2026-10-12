@@ -4,6 +4,16 @@
 @source '../../storage/framework/views/*.php';
 
 /*
+ * Cuándo el encabezado cabe en una sola fila: pantalla ancha, o pantalla apaisada de las que
+ * tienen poco alto. Un teléfono acostado son 154 px de encabezado sobre 375 de pantalla —el
+ * 41 %—, y ahí el alto vale más que el segundo renglón.
+ *
+ * 40rem y no menos: por debajo de 608 px el logotipo se mete encima de «Entradas». Entre 640
+ * y 680 se recorta el nombre de quien ha entrado, que es el precio y es barato.
+ */
+@custom-variant una-fila (@media ((width >= 64rem) or ((width >= 40rem) and (height <= 30rem))));
+
+/*
  * Charis SIL, la misma versión recortada que sirve el sitio público. Los dos WOFF2 salen de
  * `scripts/subset-fonts.mjs` del repo de Astro y están copiados aquí, no enlazados: el panel
  * y el sitio se despliegan por separado y no comparten dominio.
@@ -236,6 +246,15 @@
         font-family: var(--font-mam);
         font-variant-ligatures: none;
         font-synthesis-weight: none;
+
+        /*
+         * Guarda, no arreglo de un fallo visto: partir una palabra en Mam puede caer entre
+         * las dos letras de un dígrafo, y `ch` en dos renglones ya no es `ch`. Hoy no pasa
+         * porque `hyphens` viene en `manual`, pero un `break-words` puesto de paso en una
+         * celda estrecha lo provocaría sin que nadie lo note.
+         */
+        hyphens: none;
+        word-break: normal;
     }
 
     /*
@@ -268,8 +287,13 @@
      * de entradas. Con `min-width: 0` el selector se encoge y recorta el texto de la opción,
      * que es lo correcto: el nombre completo sigue estando al desplegarlo.
      */
+    /*
+     * `text-base sm:text-sm`: 16 px en el teléfono y 14 en escritorio. Safari en iOS amplía
+     * la página al enfocar cualquier campo por debajo de 16 px, y la deja descuadrada hasta
+     * que el docente pellizca para volver. El login no lo tenía: hereda los 16 del cuerpo.
+     */
     .campo {
-        @apply w-full min-w-0 rounded-lg border border-borde-campo bg-papel px-3 py-2 text-sm text-tinta;
+        @apply w-full min-w-0 rounded-lg border border-borde-campo bg-papel px-3 py-2 text-base text-tinta sm:text-sm;
         @apply placeholder:text-tinta-suave;
         @apply focus:outline-2 focus:outline-offset-1 focus:outline-jade;
     }
@@ -350,8 +374,10 @@
         @apply border-b border-borde;
     }
 
+    /* Una cabecera es una etiqueta, no prosa: «Dentro de» partido en dos renglones deja la
+       fila de cabeceras alta y desigual. Lo que envuelve es el dato. */
     .tabla th {
-        @apply px-4 py-2 text-left text-xs font-medium text-tinta-suave;
+        @apply px-4 py-2 text-left text-xs font-medium whitespace-nowrap text-tinta-suave;
     }
 
     .tabla tbody tr {
@@ -378,6 +404,35 @@
      */
     .lista-fichas {
         @apply divide-y divide-borde;
+    }
+
+    /*
+     * Dos columnas donde sobra ancho. Las fichas llegan hasta 1024 px —cada lista tiene su
+     * umbral, ver `ANCHO_TABLA`—, y una ficha por renglón desperdiciaba media pantalla.
+     *
+     * Los filetes horizontales los sigue poniendo `divide-y`, que en Tailwind 4 es borde de
+     * **abajo** en todas menos la última. Eso cae bien en rejilla salvo en un caso: si la
+     * cuenta es par, la penúltima cierra el mismo renglón que la última y su filete queda
+     * colgando media anchura contra el canto de la tarjeta. De ahí el `:nth-last-child(2)`.
+     *
+     * El filete vertical va en las de la columna izquierda, que son las impares. Que esa
+     * cuenta sea fiable depende de que **todos** los hijos de la lista sean fichas: por eso
+     * la casilla de «seleccionar todas» de Entradas se salió del `<ul>`. No era una entrada,
+     * y además desplazaba la paridad.
+     */
+    @media (width >= 48rem) {
+        .lista-fichas {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .lista-fichas > :nth-last-child(2):nth-child(odd) {
+            border-bottom-width: 0;
+        }
+
+        .lista-fichas > :nth-child(odd) {
+            border-right: 1px solid var(--color-borde);
+        }
     }
 
     .ficha {

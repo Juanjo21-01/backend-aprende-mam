@@ -32,7 +32,7 @@ import {
     IconoEditar,
     IconoNueva,
 } from "../componentes/Iconos";
-import { useCabeLaTabla } from "../pantalla";
+import { ANCHO_TABLA, useCabeLaTabla } from "../pantalla";
 import type { Usuario } from "../tipos";
 
 interface Reseteo {
@@ -61,7 +61,7 @@ function motivoParaNoDesactivar(usuario: Usuario): string | null {
 }
 
 export function ListaUsuarios() {
-    const cabeLaTabla = useCabeLaTabla();
+    const cabeLaTabla = useCabeLaTabla(ANCHO_TABLA.cuentas);
 
     const [usuarios, setUsuarios] = useState<Usuario[] | null>(null);
     const [cargando, setCargando] = useState(true);
@@ -223,7 +223,7 @@ export function ListaUsuarios() {
 
             {hecho !== null && <Exito>{hecho}</Exito>}
 
-            <div className="tarjeta">
+            <div className="tarjeta overflow-x-auto">
                 {cargando && usuarios === null ? (
                     <Cargando />
                 ) : cabeLaTabla ? (

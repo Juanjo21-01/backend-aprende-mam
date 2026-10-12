@@ -22,7 +22,7 @@ import {
     IconoNueva,
 } from "../componentes/Iconos";
 import { usePanel } from "../panel";
-import { useCabeLaTabla } from "../pantalla";
+import { ANCHO_TABLA, useCabeLaTabla } from "../pantalla";
 import type { Categoria } from "../tipos";
 
 function mensajeDe(fallo: unknown): string {
@@ -31,7 +31,7 @@ function mensajeDe(fallo: unknown): string {
 
 export function ListaCategorias() {
     const { sesion, recargarCatalogos } = usePanel();
-    const cabeLaTabla = useCabeLaTabla();
+    const cabeLaTabla = useCabeLaTabla(ANCHO_TABLA.temas);
 
     const [temas, setTemas] = useState<Categoria[] | null>(null);
     const [cargando, setCargando] = useState(true);
@@ -135,7 +135,7 @@ export function ListaCategorias() {
                 </Aviso>
             )}
 
-            <div className="tarjeta">
+            <div className="tarjeta overflow-x-auto">
                 {cargando && temas === null ? (
                     <Cargando />
                 ) : temas === null || temas.length === 0 ? (

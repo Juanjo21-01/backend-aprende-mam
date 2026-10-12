@@ -98,7 +98,10 @@ class VocabularioDemoSeeder extends Seeder
         ['la-naturaleza', 'a’witz', 'hoja', 's.', 'colimam'],
         ['la-naturaleza', 'tub’chil', 'flor', 's.', 'colimam'],
         ['la-casa', 'watb’il', 'cama', 's.', 'colimam'],
-        ['la-casa', 'tutz’bil', 'silla', 's.', 'colimam'],
+        // El COLIMAM imprime el lema como «TUTZ'BIL», con una `b` sin saltillo que no existe
+        // en el alfabeto; su propio ejemplo dice «kytutz'b'il», y así lo escriben también el
+        // Vocabulario de la ALMG (2003) y el de Neologismos. Es errata del diccionario.
+        ['la-casa', 'tutz’b’il', 'silla', 's.', 'colimam'],
         ['la-casa', 'tlamel ja', 'puerta', 's.', 'colimam'],
         ['la-casa', 'chjkan', 'olla', 's.', 'colimam'],
         ['la-casa', 'mejb’il', 'petate', 's.', 'colimam'],

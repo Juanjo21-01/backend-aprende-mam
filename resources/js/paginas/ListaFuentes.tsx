@@ -20,7 +20,7 @@ import {
     IconoNueva,
 } from "../componentes/Iconos";
 import { usePanel } from "../panel";
-import { useCabeLaTabla } from "../pantalla";
+import { ANCHO_TABLA, useCabeLaTabla } from "../pantalla";
 import type { Fuente } from "../tipos";
 
 function mensajeDe(fallo: unknown): string {
@@ -29,7 +29,7 @@ function mensajeDe(fallo: unknown): string {
 
 export function ListaFuentes() {
     const { sesion, recargarCatalogos } = usePanel();
-    const cabeLaTabla = useCabeLaTabla();
+    const cabeLaTabla = useCabeLaTabla(ANCHO_TABLA.fuentes);
 
     const [fuentes, setFuentes] = useState<Fuente[] | null>(null);
     const [cargando, setCargando] = useState(true);
@@ -128,7 +128,7 @@ export function ListaFuentes() {
                 </Aviso>
             )}
 
-            <div className="tarjeta">
+            <div className="tarjeta overflow-x-auto">
                 {cargando && fuentes === null ? (
                     <Cargando />
                 ) : fuentes === null || fuentes.length === 0 ? (
@@ -180,11 +180,18 @@ export function ListaFuentes() {
                                         )}
                                     </td>
                                     <td>{fuente.institucion ?? "—"}</td>
-                                    <td className="text-tinta-suave">{fuente.anio ?? "—"}</td>
-                                    <td className="text-tinta-suave">
+
+                                    {/* El título envuelve a propósito —para eso es un
+                                        título— y estas tres no: un año partido en dos
+                                        renglones no es un año. Fuentes es la única tabla que
+                                        no cabe entera ni a 1152 px. */}
+                                    <td className="text-tinta-suave whitespace-nowrap">
+                                        {fuente.anio ?? "—"}
+                                    </td>
+                                    <td className="text-tinta-suave whitespace-nowrap">
                                         {fuente.licencia ?? "—"}
                                     </td>
-                                    <td className="text-tinta-suave">
+                                    <td className="text-tinta-suave whitespace-nowrap">
                                         {fuente.total_entradas ?? 0}
                                     </td>
                                     <td className="text-right whitespace-nowrap">

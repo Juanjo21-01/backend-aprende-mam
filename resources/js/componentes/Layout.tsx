@@ -64,15 +64,18 @@ export function Layout() {
                     {/*
                         UNA FILA DESDE lg, DOS POR DEBAJO, Y UN SOLO CONTENEDOR PARA LAS DOS.
 
-                        El DOM va en el orden que se ve desde lg —marca, secciones, salir—
-                        para que el tabulador siga a la vista y no salte a «Salir» antes que a
-                        las secciones. Por debajo de lg el `max-lg:order-1` baja las secciones
-                        a una segunda línea y su `w-full` la ocupa entera.
+                        El DOM va en el orden que se ve en una fila —marca, secciones,
+                        salir— para que el tabulador siga a la vista y no salte a «Salir»
+                        antes que a las secciones. En dos filas, el `order-1` baja las
+                        secciones a la segunda y su `w-full` la ocupa entera.
+
+                        Cuándo es una y cuándo son dos lo decide la variante `una-fila`,
+                        definida en `app.css`.
 
                         Con `order` y no duplicando el `<form>` de salir: dos formas serían dos
                         tokens CSRF y una parada de tabulador de mentira.
                     */}
-                    <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2.5 px-4 pt-3 pb-2.5 sm:px-6 lg:flex-nowrap lg:gap-x-8">
+                    <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2.5 px-4 pt-3 pb-2.5 sm:px-6 una-fila:flex-nowrap una-fila:gap-x-8">
                         <div className="flex min-w-0 items-center gap-3">
                             {/*
                                 `alt=""`: el nombre del sitio va escrito al lado, dentro del
@@ -111,11 +114,11 @@ export function Layout() {
                             `self-end` es lo que sostiene el filo de la pestaña activa contra
                             el canto de la banda cuando la fila es una sola: sin él quedaría a
                             media altura y dejaría de leerse como una pestaña. El filete separa
-                            identidad de navegación y sobra desde lg, que ya no hay dos filas.
+                            identidad de navegación y sobra cuando ya no hay dos filas.
                         */}
                         <nav
                             aria-label="Secciones del panel"
-                            className="w-full self-end overflow-x-auto border-t border-sobre-jade/10 max-lg:order-1 [scrollbar-width:none] lg:w-auto lg:shrink-0 lg:border-0 [&::-webkit-scrollbar]:hidden"
+                            className="order-1 w-full self-end overflow-x-auto border-t border-sobre-jade/10 [scrollbar-width:none] una-fila:order-0 una-fila:w-auto una-fila:shrink-0 una-fila:border-0 [&::-webkit-scrollbar]:hidden"
                         >
                             <ul className="flex min-w-max gap-x-5">
                                 <li>
