@@ -30,7 +30,7 @@ export function TecladoDeGrafemas({
     valor,
     alCambiar,
 }: {
-    campo: RefObject<HTMLInputElement | null>;
+    campo: RefObject<HTMLInputElement | HTMLTextAreaElement | null>;
     valor: string;
     alCambiar: (valor: string) => void;
 }) {

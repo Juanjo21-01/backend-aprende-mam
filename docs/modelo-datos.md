@@ -81,8 +81,54 @@ Estructuras presentes en el corpus que el plan inicial no contemplaba:
 | `textos.preguntas`            | Comprensión lectora de los cuentos                                       | Insumo para cuestionarios                                             |
 | `frases_ancestrales`          | Consejos y advertencias tradicionales                                    | Sección «Kykawb'il qchman»                                            |
 | `numerales`                   | 1 al 20 con valor y representación maya                                  | Sección «Qo ajlan toj qyol Mam»                                       |
-| `paginas`                     | Contenido editorial de secciones culturales                              | Módulo 1                                                              |
-| `documentos`                  | PDF descargables, metadatos, contador de descargas                       | Módulo 3                                                              |
+| `paginas`                     | Contenido editorial: cultura, gramática, base legal (ver abajo)          | Módulo 1                                                              |
+| `documentos`                  | PDF descargables: solo metadatos (ver abajo)                             | Módulo 3                                                              |
+
+### `paginas` — implementada
+
+Una sola tabla con la sección como columna (`SeccionPagina`: `cultura`, `gramatica`,
+`base_legal`). Agregar una sección es agregar un valor al enum, no una migración.
+
+| Campo                                                   | Tipo         | Notas                                                                      |
+| ------------------------------------------------------- | ------------ | -------------------------------------------------------------------------- |
+| `seccion`                                               | varchar(30)  | Enum `SeccionPagina`. Es también la clave bajo la que sale la exportación  |
+| `slug`                                                  | varchar(140) | Único **por sección** (`UNIQUE(seccion, slug)`). Va en la URL del sitio    |
+| `titulo`                                                | varchar(191) | Pasa por el normalizador del Mam                                           |
+| `cuerpo`                                                | longtext     | Markdown simple. Pasa por el normalizador. Sin HTML (ver `MarkdownSimple`) |
+| `orden`                                                 | smallint     | Lo decide el docente. Nunca se ordena por título                           |
+| `video_url`                                             | varchar(500) | Opcional. Solo YouTube, Wordwall o Educaplay; nunca se aloja               |
+| `fuente_id`                                             | fk, nullable | `nullOnDelete`                                                             |
+| `revisado`, `creado_por`, `revisado_por`, `revisado_en` | —            | Igual que `entradas`: nace sin revisar; solo el administrador firma        |
+
+- **No hay bandera `publicada`**: «no revisada» hace de borrador. Solo lo revisado sale en `contenido.json`.
+- **Imágenes**: no se suben. El Markdown admite `![alt](url)` únicamente con `https://` o una ruta del sitio que empiece con `/`.
+- Enlaces del cuerpo: `https://`, ruta del sitio (`/…`) o ancla (`#…`). `http:`, `javascript:` y `data:` se rechazan al guardar.
+
+### `documentos` — implementada
+
+Metadatos de un PDF que **no vive en este backend**.
+
+| Campo                                     | Tipo           | Notas                                                                  |
+| ----------------------------------------- | -------------- | ---------------------------------------------------------------------- |
+| `slug`                                    | varchar(140)   | Único                                                                  |
+| `titulo`, `descripcion`                   | varchar / text | Pasan por el normalizador del Mam                                      |
+| `tipo`                                    | varchar(30)    | Enum `TipoDocumento`: `guia`, `ficha`, `cuadernillo`, `infografia`     |
+| `archivo_url`                             | varchar(500)   | Ruta del sitio (`/materiales/x.pdf`) o URL https que termine en `.pdf` |
+| `tamano_kb`                               | int, nullable  | Para decirle a quien tiene 3G cuánto va a bajar                        |
+| `licencia`                                | varchar(191)   | Cita: no se normaliza                                                  |
+| `video_url`                               | varchar(500)   | Igual que en `paginas`                                                 |
+| `fuente_id`, `orden`, `revisado`, autoría | —              | Igual que en `paginas`                                                 |
+
+- El PDF se coloca en el frontend o en un CDN y se baja **bajo demanda**: el sitio no lo precachea.
+- **Sin contador de descargas**: el sitio es estático y no vuelve a llamar a este backend, así que no habría quien lo incrementara.
+
+### Video externo
+
+`video_url` (en `paginas` y en `documentos`) valida con `App\Support\Contenido\EnlaceIncrustable`, que
+**espeja `src/data/incrustado.ts` del frontend**: solo https, lista cerrada de dominios, y de
+YouTube hay que poder extraer el identificador de 11 caracteres. Se acepta pegar el código
+`<iframe>` del proveedor: se guarda solo su `src`. Si se agrega un proveedor en `incrustado.ts`,
+se agrega también en `EnlaceIncrustable::DOMINIOS`.
 
 Los numerales mayas se renderizan como SVG en el frontend: el bloque Unicode existe pero
 no tiene soporte tipográfico real.

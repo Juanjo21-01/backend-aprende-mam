@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Concerns\MuestraAutoria;
 use App\Models\Entrada;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -13,6 +14,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
  */
 final class EntradaResource extends JsonResource
 {
+    use MuestraAutoria;
+
     /**
      * @return array<string, mixed>
      */
@@ -50,22 +53,5 @@ final class EntradaResource extends JsonResource
             'creado_en' => $this->created_at,
             'actualizado_en' => $this->updated_at,
         ];
-    }
-
-    /**
-     * La relación puede estar cargada y valer `null`: una entrada importada no tiene quien
-     * la cargara, y una sin revisar no tiene revisor. Si no se cargó, la clave desaparece
-     * de la respuesta en lugar de mentir con un `null`.
-     */
-    private function usuario(string $relacion): mixed
-    {
-        return $this->whenLoaded($relacion, function () use ($relacion): ?array {
-            $usuario = $this->{$relacion};
-
-            return $usuario === null ? null : [
-                'id' => $usuario->id,
-                'nombre' => $usuario->name,
-            ];
-        });
     }
 }

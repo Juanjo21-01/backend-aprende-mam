@@ -13,8 +13,9 @@ use Illuminate\Database\Eloquent\Model;
  * Lo que pasa cada vez que cambia algo que el sitio público publica.
  *
  * Dos cosas, y en este orden: sube el número de versión, y programa la publicación con
- * retardo. Escucha `created`, `updated` y `deleted` sobre `Entrada`, `Categoria` y
- * `Fuente`, que son las tres que salen en el JSON exportado.
+ * retardo. Escucha `created`, `updated` y `deleted` sobre `Entrada`, `Categoria`, `Fuente`,
+ * `Pagina` y `Documento`, que son las que salen en los JSON exportados (`vocabulario.json` y
+ * `contenido.json` comparten el mismo número de versión).
  *
  * **La versión sube acá y no en el trabajo de publicación**, a diferencia de lo que sugiere
  * la Especificación Técnica §2.2. El motivo: así el número refleja el estado del contenido

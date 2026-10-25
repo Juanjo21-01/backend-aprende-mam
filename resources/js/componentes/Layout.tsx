@@ -142,6 +142,18 @@ export function Layout() {
                                     </NavLink>
                                 </li>
 
+                                <li>
+                                    <NavLink to="/paginas" className={claseDeEnlace}>
+                                        Páginas
+                                    </NavLink>
+                                </li>
+
+                                <li>
+                                    <NavLink to="/documentos" className={claseDeEnlace}>
+                                        Documentos
+                                    </NavLink>
+                                </li>
+
                                 {sesion.es_administrador && (
                                     <li>
                                         <NavLink to="/usuarios" className={claseDeEnlace}>

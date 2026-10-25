@@ -15,13 +15,17 @@ import type {
     CategoriaGramatical,
     Coleccion,
     DatosCategoria,
+    DatosDocumento,
     DatosEntrada,
     DatosFuente,
+    DatosPagina,
     DatosUsuario,
+    Documento,
     Entrada,
     FiltrosEntradas,
     Fuente,
     Pagina,
+    PaginaEditorial,
     EstadoPublicacion,
     Sesion,
     Usuario,
@@ -103,6 +107,46 @@ export const actualizarFuente = async (id: number, datos: DatosFuente): Promise<
     (await api.reemplazar<{ data: Fuente }>(`/fuentes/${id}`, datos)).data;
 
 export const borrarFuente = (id: number): Promise<void> => api.borrar(`/fuentes/${id}`);
+
+/**
+ * Páginas editoriales (cultura, gramática, base legal). Sin paginar: son decenas.
+ * Misma regla que las entradas: ambos roles cargan, solo el administrador borra.
+ */
+export const listarPaginas = async (): Promise<PaginaEditorial[]> =>
+    (await api.obtener<Coleccion<PaginaEditorial>>('/paginas')).data;
+
+export const obtenerPagina = async (id: number): Promise<PaginaEditorial> =>
+    (await api.obtener<{ data: PaginaEditorial }>(`/paginas/${id}`)).data;
+
+export const crearPagina = async (datos: DatosPagina): Promise<PaginaEditorial> =>
+    (await api.crear<{ data: PaginaEditorial }>('/paginas', datos)).data;
+
+export const actualizarPagina = async (id: number, datos: DatosPagina): Promise<PaginaEditorial> =>
+    (await api.reemplazar<{ data: PaginaEditorial }>(`/paginas/${id}`, datos)).data;
+
+export const borrarPagina = (id: number): Promise<void> => api.borrar(`/paginas/${id}`);
+
+/** La firma del validador lingüístico sobre una página. Su propia ruta, como en las entradas. */
+export const marcarRevisionPagina = async (id: number, revisado: boolean): Promise<PaginaEditorial> =>
+    (await api.modificar<{ data: PaginaEditorial }>(`/paginas/${id}/revision`, { revisado })).data;
+
+/** Materiales descargables: solo metadatos, el PDF no se sube desde el panel. */
+export const listarDocumentos = async (): Promise<Documento[]> =>
+    (await api.obtener<Coleccion<Documento>>('/documentos')).data;
+
+export const obtenerDocumento = async (id: number): Promise<Documento> =>
+    (await api.obtener<{ data: Documento }>(`/documentos/${id}`)).data;
+
+export const crearDocumento = async (datos: DatosDocumento): Promise<Documento> =>
+    (await api.crear<{ data: Documento }>('/documentos', datos)).data;
+
+export const actualizarDocumento = async (id: number, datos: DatosDocumento): Promise<Documento> =>
+    (await api.reemplazar<{ data: Documento }>(`/documentos/${id}`, datos)).data;
+
+export const borrarDocumento = (id: number): Promise<void> => api.borrar(`/documentos/${id}`);
+
+export const marcarRevisionDocumento = async (id: number, revisado: boolean): Promise<Documento> =>
+    (await api.modificar<{ data: Documento }>(`/documentos/${id}/revision`, { revisado })).data;
 
 /** Todo lo de cuentas es solo para administradores; lo impone `UserPolicy`. */
 export const listarUsuarios = async (): Promise<Usuario[]> =>

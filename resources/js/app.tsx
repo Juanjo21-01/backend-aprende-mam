@@ -17,12 +17,16 @@ import { IconoVolver } from "./componentes/Iconos";
 import { Layout } from "./componentes/Layout";
 import { ProveedorPanel, usePanel } from "./panel";
 import { FormularioCategoria } from "./paginas/FormularioCategoria";
+import { FormularioDocumento } from "./paginas/FormularioDocumento";
 import { FormularioEntrada } from "./paginas/FormularioEntrada";
 import { FormularioFuente } from "./paginas/FormularioFuente";
+import { FormularioPagina } from "./paginas/FormularioPagina";
 import { FormularioUsuario } from "./paginas/FormularioUsuario";
 import { ListaCategorias } from "./paginas/ListaCategorias";
+import { ListaDocumentos } from "./paginas/ListaDocumentos";
 import { ListaEntradas } from "./paginas/ListaEntradas";
 import { ListaFuentes } from "./paginas/ListaFuentes";
+import { ListaPaginas } from "./paginas/ListaPaginas";
 import { ListaUsuarios } from "./paginas/ListaUsuarios";
 import { MiCuenta } from "./paginas/MiCuenta";
 
@@ -91,6 +95,14 @@ function Panel() {
                         <Route path="fuentes" element={<ListaFuentes />} />
                         <Route path="fuentes/nueva" element={<FormularioFuente />} />
                         <Route path="fuentes/:id" element={<FormularioFuente />} />
+
+                        <Route path="paginas" element={<ListaPaginas />} />
+                        <Route path="paginas/nueva" element={<FormularioPagina />} />
+                        <Route path="paginas/:id" element={<FormularioPagina />} />
+
+                        <Route path="documentos" element={<ListaDocumentos />} />
+                        <Route path="documentos/nuevo" element={<FormularioDocumento />} />
+                        <Route path="documentos/:id" element={<FormularioDocumento />} />
 
                         <Route
                             path="usuarios"

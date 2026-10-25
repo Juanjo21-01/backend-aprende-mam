@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Enums\SeccionPagina;
 use App\Models\Categoria;
+use App\Models\Documento;
 use App\Models\Entrada;
+use App\Models\Fuente;
+use App\Models\Pagina;
 use App\Models\VersionContenido;
 use Illuminate\Http\JsonResponse;
 use Symfony\Component\HttpFoundation\StreamedJsonResponse;
@@ -54,6 +58,73 @@ final class ExportController extends Controller
             'categorias' => $this->categorias(),
 
             'entradas' => $entradas->map($this->comoArreglo(...)),
+        ]);
+    }
+
+    /**
+     * El contenido editorial: páginas por sección y documentos descargables.
+     *
+     * Mismo criterio que el vocabulario: solo sale lo revisado, y lleva el mismo número de
+     * `version`, porque es un solo conjunto de datos publicable y el sitio se recompila
+     * entero. Si no hay nada revisado todavía, las tres secciones salen vacías y no
+     * ausentes: el frontend puede iterar las claves sin comprobar si existen.
+     *
+     * No se transmite por partes como el vocabulario: son decenas de filas, no seis mil.
+     *
+     * Las páginas salen agrupadas por la clave de su sección, que es el valor de
+     * `SeccionPagina` y por tanto parte del contrato con el frontend. Dentro de cada una, en
+     * el orden que fijó el docente. Los documentos, igual.
+     */
+    public function contenido(): JsonResponse
+    {
+        $paginas = Pagina::query()
+            ->revisadas()
+            ->with('fuente:id,titulo,institucion,anio,url')
+            ->enOrden()
+            ->get();
+
+        $documentos = Documento::query()
+            ->revisados()
+            ->with('fuente:id,titulo,institucion,anio,url')
+            ->enOrden()
+            ->get();
+
+        $porSeccion = [];
+
+        foreach (SeccionPagina::cases() as $seccion) {
+            $porSeccion[$seccion->value] = $paginas
+                ->filter(fn (Pagina $pagina): bool => $pagina->seccion === $seccion)
+                ->map(fn (Pagina $pagina): array => [
+                    'slug' => $pagina->slug,
+                    'titulo' => $pagina->titulo,
+                    'cuerpo' => $pagina->cuerpo,
+                    'orden' => $pagina->orden,
+                    'video_url' => $pagina->video_url,
+                    'fuente' => $this->fuenteComoArreglo($pagina->fuente),
+                ])
+                ->values()
+                ->all();
+        }
+
+        return response()->json([
+            'version' => VersionContenido::numeroActual(),
+            'generado_en' => now()->toIso8601String(),
+            'paginas' => $porSeccion,
+            'documentos' => $documentos
+                ->map(fn (Documento $documento): array => [
+                    'slug' => $documento->slug,
+                    'titulo' => $documento->titulo,
+                    'descripcion' => $documento->descripcion,
+                    'tipo' => $documento->tipo->value,
+                    'archivo_url' => $documento->archivo_url,
+                    'tamano_kb' => $documento->tamano_kb,
+                    'licencia' => $documento->licencia,
+                    'orden' => $documento->orden,
+                    'video_url' => $documento->video_url,
+                    'fuente' => $this->fuenteComoArreglo($documento->fuente),
+                ])
+                ->values()
+                ->all(),
         ]);
     }
 
@@ -136,6 +207,23 @@ final class ExportController extends Controller
                 'anio' => $entrada->fuente->anio,
                 'pagina' => $entrada->pagina_fuente,
             ],
+        ];
+    }
+
+    /**
+     * La procedencia de una página o un documento. Sin `pagina`, a diferencia de la de una
+     * entrada: ese dato es de la palabra, no de la fuente. Con `url`, porque aquí la fuente
+     * es lo que se cita al pie y una dirección ayuda a quien quiera ir al original.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function fuenteComoArreglo(?Fuente $fuente): ?array
+    {
+        return $fuente === null ? null : [
+            'titulo' => $fuente->titulo,
+            'institucion' => $fuente->institucion,
+            'anio' => $fuente->anio,
+            'url' => $fuente->url,
         ];
     }
 }

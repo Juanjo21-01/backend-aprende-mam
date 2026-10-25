@@ -1,0 +1,46 @@
+{
+    "version": 42,
+    "generado_en": "2026-10-25T18:30:00+00:00",
+    "paginas": {
+        "cultura": [
+            {
+                "slug": "los-cuatro-pueblos",
+                "titulo": "Los cuatro pueblos",
+                "cuerpo": "## Historia\n\nTexto en **Markdown simple**. Una palabra en Mam: q’aq’ (fuego).\n\n![Mapa de San Marcos](/img/mapa.png)",
+                "orden": 1,
+                "video_url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                "fuente": {
+                    "titulo": "Gramática Pedagógica del Idioma Mam",
+                    "institucion": "ALMG",
+                    "anio": 2018,
+                    "url": null
+                }
+            }
+        ],
+        "gramatica": [],
+        "base_legal": [
+            {
+                "slug": "decreto-19-2003",
+                "titulo": "Ley de Idiomas Nacionales",
+                "cuerpo": "Resumen de la ley. Texto completo en [el Congreso](https://www.congreso.gob.gt/).",
+                "orden": 1,
+                "video_url": null,
+                "fuente": null
+            }
+        ]
+    },
+    "documentos": [
+        {
+            "slug": "guia-de-lectura",
+            "titulo": "Guía de lectura",
+            "descripcion": "Para el aula.",
+            "tipo": "guia",
+            "archivo_url": "/materiales/guia-de-lectura.pdf",
+            "tamano_kb": 820,
+            "licencia": "Reproducción sin fines comerciales citando la fuente",
+            "orden": 1,
+            "video_url": null,
+            "fuente": null
+        }
+    ]
+}

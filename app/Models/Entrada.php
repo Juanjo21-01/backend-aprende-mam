@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Observers\EntradaAuthorshipObserver;
 use App\Observers\PublishableContentObserver;
+use App\Observers\RevisionAuthorshipObserver;
 use App\Policies\EntradaPolicy;
 use App\Support\Mam\SortKeyGenerator;
 use App\Support\Mam\TextNormalizer;
@@ -40,7 +40,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
  */
 #[Table('entradas')]
 #[UsePolicy(EntradaPolicy::class)]
-#[ObservedBy([PublishableContentObserver::class, EntradaAuthorshipObserver::class])]
+#[ObservedBy([PublishableContentObserver::class, RevisionAuthorshipObserver::class])]
 #[Fillable([
     'mam',
     'espanol',

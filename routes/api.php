@@ -6,10 +6,14 @@ use App\Http\Controllers\Admin\CategoriaController;
 use App\Http\Controllers\Admin\CategoriaGramaticalController;
 use App\Http\Controllers\Admin\CurrentUserController;
 use App\Http\Controllers\Admin\CurrentUserPasswordController;
+use App\Http\Controllers\Admin\DocumentoController;
 use App\Http\Controllers\Admin\EntradaController;
 use App\Http\Controllers\Admin\FuenteController;
+use App\Http\Controllers\Admin\PaginaController;
 use App\Http\Controllers\Admin\PublicacionController;
+use App\Http\Controllers\Admin\RevisionDocumentoController;
 use App\Http\Controllers\Admin\RevisionEntradaController;
+use App\Http\Controllers\Admin\RevisionPaginaController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\UserPasswordController;
 use App\Http\Controllers\Admin\UserStatusController;
@@ -73,6 +77,16 @@ Route::prefix('v1')->group(function (): void {
         Route::apiResource('categorias', CategoriaController::class);
         Route::apiResource('fuentes', FuenteController::class);
 
+        // Contenido editorial (cultura, gramática, base legal) y materiales descargables.
+        // Misma política que las entradas; la firma del validador va aparte, como allá.
+        Route::apiResource('paginas', PaginaController::class);
+        Route::patch('paginas/{pagina}/revision', [RevisionPaginaController::class, 'update'])
+            ->name('paginas.revision');
+
+        Route::apiResource('documentos', DocumentoController::class);
+        Route::patch('documentos/{documento}/revision', [RevisionDocumentoController::class, 'update'])
+            ->name('documentos.revision');
+
         // Catálogo normativo de ALMG: se lee, no se edita. Se cambia re-sembrando.
         Route::get('categorias-gramaticales', [CategoriaGramaticalController::class, 'index'])
             ->name('categorias-gramaticales.index');
@@ -84,6 +98,7 @@ Route::prefix('v1')->group(function (): void {
 
     Route::middleware('token.exportacion')->prefix('export')->name('export.')->group(function (): void {
         Route::get('vocabulario.json', [ExportController::class, 'vocabulario'])->name('vocabulario');
+        Route::get('contenido.json', [ExportController::class, 'contenido'])->name('contenido');
         Route::get('version', [ExportController::class, 'version'])->name('version');
     });
 });

@@ -101,6 +101,97 @@ export interface DatosEntrada {
     categorias: number[];
 }
 
+/** Las secciones editoriales; el valor es también la clave que usa la exportación. */
+export type SeccionPagina = 'cultura' | 'gramatica' | 'base_legal';
+
+export const SECCIONES: { valor: SeccionPagina; nombre: string }[] = [
+    { valor: 'cultura', nombre: 'Cultura' },
+    { valor: 'gramatica', nombre: 'Gramática' },
+    { valor: 'base_legal', nombre: 'Base legal' },
+];
+
+/**
+ * Una página editorial, tal como la devuelve `PaginaResource`.
+ *
+ * Como `Entrada`: nace sin revisar y solo el validador la marca; `revisado` nunca viaja en
+ * `DatosPagina`. El cuerpo es Markdown simple, sin HTML.
+ */
+export interface PaginaEditorial {
+    id: number;
+    seccion: SeccionPagina;
+    seccion_nombre: string;
+    slug: string;
+    titulo: string;
+    cuerpo: string;
+    orden: number;
+    video_url: string | null;
+    fuente_id: number | null;
+    fuente?: Fuente | null;
+    revisado: boolean;
+    revisado_en: string | null;
+    creado_por?: Autor | null;
+    revisado_por?: Autor | null;
+    creado_en: string;
+    actualizado_en: string;
+}
+
+/** Lo que acepta `PaginaRequest`. `video_url` admite la URL o el código `<iframe>`. */
+export interface DatosPagina {
+    seccion: SeccionPagina;
+    slug: string;
+    titulo: string;
+    cuerpo: string;
+    orden: number;
+    video_url: string | null;
+    fuente_id: number | null;
+}
+
+export type TipoDocumento = 'guia' | 'ficha' | 'cuadernillo' | 'infografia';
+
+export const TIPOS_DE_DOCUMENTO: { valor: TipoDocumento; nombre: string }[] = [
+    { valor: 'guia', nombre: 'Guía' },
+    { valor: 'ficha', nombre: 'Ficha' },
+    { valor: 'cuadernillo', nombre: 'Cuadernillo' },
+    { valor: 'infografia', nombre: 'Infografía' },
+];
+
+/** Metadatos de un PDF descargable, como los devuelve `DocumentoResource`. */
+export interface Documento {
+    id: number;
+    slug: string;
+    titulo: string;
+    descripcion: string | null;
+    tipo: TipoDocumento;
+    tipo_nombre: string;
+    archivo_url: string;
+    tamano_kb: number | null;
+    licencia: string | null;
+    video_url: string | null;
+    orden: number;
+    fuente_id: number | null;
+    fuente?: Fuente | null;
+    revisado: boolean;
+    revisado_en: string | null;
+    creado_por?: Autor | null;
+    revisado_por?: Autor | null;
+    creado_en: string;
+    actualizado_en: string;
+}
+
+/** Lo que acepta `DocumentoRequest`. */
+export interface DatosDocumento {
+    slug: string;
+    titulo: string;
+    descripcion: string | null;
+    tipo: TipoDocumento;
+    archivo_url: string;
+    tamano_kb: number | null;
+    licencia: string | null;
+    video_url: string | null;
+    fuente_id: number | null;
+    orden: number;
+}
+
 /**
  * Filtros de `GET /entradas`. Los que van vacíos no se mandan.
  *
