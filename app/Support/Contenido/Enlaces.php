@@ -52,12 +52,27 @@ final class Enlaces
     }
 
     /**
+     * Servicios donde el docente aloja sus PDF y cuyas direcciones no terminan en `.pdf`: el
+     * enlace de «Compartir» de Drive es `drive.google.com/file/d/ID/view`, y el de descarga
+     * directa, `drive.google.com/uc?export=download&id=ID`. Lista cerrada, como los dominios del
+     * video: lo que no esté aquí tiene que apuntar a un `.pdf`.
+     */
+    private const HOSTS_DE_ARCHIVOS = ['drive.google.com', 'drive.usercontent.google.com'];
+
+    /**
      * Motivo por el que no sirve como archivo PDF descargable, o `null` si sirve.
      */
     public static function problemaDeArchivoPdf(string $destino): ?string
     {
         if (! self::esHttps($destino) && ! self::esRutaDelSitio($destino)) {
             return 'debe ser una dirección https o una ruta del sitio que empiece con «/».';
+        }
+
+        $host = parse_url($destino, PHP_URL_HOST);
+
+        if (self::esHttps($destino) && is_string($host)
+            && in_array(strtolower($host), self::HOSTS_DE_ARCHIVOS, true)) {
+            return null;
         }
 
         $ruta = parse_url($destino, PHP_URL_PATH);

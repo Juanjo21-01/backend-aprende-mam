@@ -70,7 +70,11 @@ Catálogo obtenido del corpus ALMG. **Conservar las clases propias de las lengua
 
 ## Contenido pedagógico y cultural
 
-Estructuras presentes en el corpus que el plan inicial no contemplaba:
+Estructuras presentes en el corpus que el plan inicial no contemplaba. **Solo `paginas` y
+`documentos` están implementadas.** Las demás quedaron **fuera del alcance** del proyecto
+(decisión de octubre de 2026): `ejemplos`, `dialogos`, `textos`, `frases_ancestrales`,
+`numerales`, y en «Gamificación» los cuestionarios redactados y los juegos externos. Se
+conservan descritas solo como referencia de lo que contiene el corpus.
 
 | Tabla                         | Contenido                                                                | Origen                                                                |
 | ----------------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------- |
@@ -113,7 +117,7 @@ Metadatos de un PDF que **no vive en este backend**.
 | `slug`                                    | varchar(140)   | Único                                                                  |
 | `titulo`, `descripcion`                   | varchar / text | Pasan por el normalizador del Mam                                      |
 | `tipo`                                    | varchar(30)    | Enum `TipoDocumento`: `guia`, `ficha`, `cuadernillo`, `infografia`     |
-| `archivo_url`                             | varchar(500)   | Ruta del sitio (`/materiales/x.pdf`) o URL https que termine en `.pdf` |
+| `archivo_url`                             | varchar(500)   | Ruta del sitio (`/materiales/x.pdf`), URL https que termine en `.pdf` o enlace de Google Drive |
 | `tamano_kb`                               | int, nullable  | Para decirle a quien tiene 3G cuánto va a bajar                        |
 | `licencia`                                | varchar(191)   | Cita: no se normaliza                                                  |
 | `video_url`                               | varchar(500)   | Igual que en `paginas`                                                 |

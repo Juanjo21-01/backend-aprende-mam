@@ -82,6 +82,11 @@ final class MarkdownSimpleTest extends TestCase
         $this->assertNotNull(Enlaces::problemaDeArchivoPdf('/materiales/guia.docx'));
         $this->assertNotNull(Enlaces::problemaDeArchivoPdf('http://cdn.example.org/guia.pdf'));
         $this->assertNotNull(Enlaces::problemaDeArchivoPdf('guia.pdf'));
+        // Google Drive no termina en `.pdf`, pero es donde el docente sube los suyos.
+        $this->assertNull(Enlaces::problemaDeArchivoPdf('https://drive.google.com/file/d/ABC/view'));
+        $this->assertNull(Enlaces::problemaDeArchivoPdf('https://drive.google.com/uc?export=download&id=ABC'));
+        $this->assertNotNull(Enlaces::problemaDeArchivoPdf('http://drive.google.com/file/d/ABC/view'));
+        $this->assertNotNull(Enlaces::problemaDeArchivoPdf('https://drive.google.com.evil.org/file/d/ABC/view'));
         $this->assertNotNull(Enlaces::problemaDeArchivoPdf('//cdn.example.org/guia.pdf'));
     }
 }
