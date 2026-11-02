@@ -212,10 +212,10 @@
 
     <main>
         {{-- `alt=""`: el nombre va escrito justo debajo. Con texto alternativo, un lector de
-            pantalla anunciaría «AprendeMam AprendeMam». --}}
+            pantalla anunciaría el nombre dos veces. --}}
         <div class="marca">
             <img src="/logo.webp" alt="" width="96" height="96">
-            <h1>Aprende<span>Mam</span></h1>
+            <h1>Biblioteca Digital Mam</h1>
             <p class="sub">Panel de administración</p>
         </div>
 

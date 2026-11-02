@@ -66,7 +66,7 @@ class VocabularioDemoSeeder extends Seeder
 
     private const FUENTES = [
         'colimam' => ['Diccionario Mam', 'Comunidad Lingüística Mam (COLIMAM), ALMG', 2011],
-        'manual' => ['Manual de Normas Ortográficas y Carga de Contenido', 'AprendeMam', 2026],
+        'manual' => ['Manual de Normas Ortográficas y Carga de Contenido', 'Biblioteca Digital Mam', 2026],
     ];
 
     /** @var list<array{string, string, string, string, string}> tema, mam, español, clase, fuente */

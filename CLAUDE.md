@@ -1,4 +1,4 @@
-# AprendeMam — API y panel de administración
+# Biblioteca Digital Mam — API y panel de administración
 
 Biblioteca digital del idioma maya **Mam** (variante de San Marcos, Guatemala) para escuelas de primaria y básicos. Este repositorio es el backend headless: CMS, base de datos y endpoint de exportación. El sitio público vive en otro repositorio (Astro) y **no consume esta API en tiempo de ejecución**.
 

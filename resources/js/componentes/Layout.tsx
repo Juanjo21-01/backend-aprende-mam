@@ -80,7 +80,7 @@ export function Layout() {
                             {/*
                                 `alt=""`: el nombre del sitio va escrito al lado, dentro del
                                 mismo bloque. Con texto alternativo, un lector de pantalla
-                                anunciaría «AprendeMam AprendeMam».
+                                anunciaría el nombre dos veces.
 
                                 `rounded-full` no es adorno: el WebP es el logo circular sobre
                                 un cuadrado blanco, y sin el recorte se ven cuatro esquinas

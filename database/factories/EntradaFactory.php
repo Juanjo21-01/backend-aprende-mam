@@ -47,7 +47,7 @@ class EntradaFactory extends Factory
         ['tx’ajol', 'lavar'],
         ['pa’ch', 'cuache'],
 
-        // Manual de Normas Ortográficas — AprendeMam. Las seis palabras con `ẍ`.
+        // Manual de Normas Ortográficas — Biblioteca Digital Mam. Las seis palabras con `ẍ`.
         ['ẍiky', 'conejo'],
         ['kyiẍ', 'pez; pescado'],
         ['wiẍ', 'gato'],

@@ -67,7 +67,7 @@ final class DeployHook
         return Http::timeout(self::TIMEOUT_SEGUNDOS)
             ->asJson()
             ->post($this->url(), [
-                'trigger_title' => "AprendeMam · vocabulario v{$version}",
+                'trigger_title' => "Biblioteca Digital Mam · vocabulario v{$version}",
             ]);
     }
 

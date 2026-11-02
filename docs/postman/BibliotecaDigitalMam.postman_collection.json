@@ -1,6 +1,6 @@
 {
   "info": {
-    "name": "AprendeMam - Endpoints",
+    "name": "Biblioteca Digital Mam - Endpoints",
     "description": "Panel de administración y exportación del vocabulario.\n\n## Antes de correr\n\n1. `php artisan serve`\n2. `php artisan mam:crear-usuario` para un administrador y otro para un editor.\n3. Poné esos correos y contraseñas en las variables de la colección.\n4. Para la carpeta de exportación, copiá `EXPORT_TOKEN` de tu `.env` a la variable `export_token`.\n\n## Cómo funciona la autenticación\n\nEl panel usa **sesión**, no tokens. Eso implica tres cosas que la colección ya resuelve sola:\n\n- Hay que pedir `GET /sanctum/csrf-cookie` **una vez** antes de nada. Es la primera petición de la carpeta «0 · Sesión».\n- Toda petición a `/api/v1/admin/*` necesita la cabecera `Referer`. Sin ella, Sanctum no aplica la sesión y responde 401 aunque estés dentro. El script de la colección la agrega a todas.\n- Las escrituras necesitan `X-XSRF-TOKEN`. El script lo lee de la cookie después de cada respuesta y lo guarda en una variable.\n\nSi corrés la colección entera con el Runner, las carpetas van en orden y se encadenan: crear fuente → crear tema → crear entrada → revisarla → verla salir en la exportación → comprobar que el editor no puede borrar → limpiar.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
