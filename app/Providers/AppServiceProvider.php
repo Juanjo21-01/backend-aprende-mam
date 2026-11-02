@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Support\Mam\Alphabet;
 use App\Support\Mam\SortKeyGenerator;
 use App\Support\Mam\Tokenizer;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -31,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        if (app()->isProduction()) {
+            URL::forceScheme('https');
+        }
     }
 }

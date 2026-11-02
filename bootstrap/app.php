@@ -15,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Railway termina TLS en su proxy y reenvía la petición al contenedor por HTTP.
+        // Confiar en X-Forwarded-Proto permite que Laravel genere URLs HTTPS (por ejemplo,
+        // los assets de Vite) sin aceptar del proxy encabezados de host o IP.
+        $middleware->trustProxies(
+            at: '*',
+            headers: Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         // El panel lo sirve este mismo Laravel desde /admin, así que las peticiones del
         // panel llegan con la cookie de sesión. Sin esto el grupo `api` es sin estado y
         // `auth:sanctum` exigiría un token que nunca se emite.
