@@ -125,6 +125,8 @@ export interface PaginaEditorial {
     cuerpo: string;
     orden: number;
     video_url: string | null;
+    archivo_url: string | null;
+    tamano_kb: number | null;
     fuente_id: number | null;
     fuente?: Fuente | null;
     revisado: boolean;
@@ -143,6 +145,9 @@ export interface DatosPagina {
     cuerpo: string;
     orden: number;
     video_url: string | null;
+    /** PDF adjunto. Solo lo aceptan las páginas de base legal. */
+    archivo_url: string | null;
+    tamano_kb: number | null;
     fuente_id: number | null;
 }
 

@@ -7,6 +7,7 @@ namespace App\Http\Requests\Admin;
 use App\Enums\SeccionPagina;
 use App\Models\Pagina;
 use App\Support\Contenido\EnlaceIncrustable;
+use App\Support\Contenido\Enlaces;
 use App\Support\Contenido\MarkdownSimple;
 use Closure;
 use Illuminate\Foundation\Http\FormRequest;
@@ -18,7 +19,8 @@ use Illuminate\Validation\Rule;
  * Como `EntradaRequest`, **no normaliza**: eso es del mutator del modelo. Aquí se comprueba
  * la forma, y además dos cosas que el modelo no puede decidir porque no son ortografía:
  * que el cuerpo sea Markdown simple y que el video sea de un proveedor que el frontend
- * sabe incrustar.
+ * sabe incrustar. El PDF adjunto, solo en la base legal y con las mismas reglas que el de un
+ * documento de materiales.
  *
  * `revisado` es `prohibited`: se marca desde su propia ruta y solo la usa el validador.
  */
@@ -83,6 +85,26 @@ final class PaginaRequest extends FormRequest
 
             'orden' => ['sometimes', 'integer', 'min:0', 'max:65535'],
             'video_url' => ['nullable', 'string', 'max:2000', EnlaceIncrustable::regla()],
+
+            'archivo_url' => [
+                'nullable',
+                'string',
+                'max:500',
+                function (string $atributo, mixed $valor, Closure $fallar): void {
+                    if ($this->seccionResultante() !== SeccionPagina::BaseLegal->value) {
+                        $fallar('Solo las páginas de base legal llevan un PDF adjunto.');
+
+                        return;
+                    }
+
+                    $motivo = is_string($valor) ? Enlaces::problemaDeArchivoPdf($valor) : null;
+
+                    if ($motivo !== null) {
+                        $fallar("La dirección del PDF {$motivo}");
+                    }
+                },
+            ],
+            'tamano_kb' => ['nullable', 'integer', 'min:1', 'max:4000000'],
             'fuente_id' => ['nullable', 'integer', 'exists:fuentes,id'],
 
             'revisado' => ['prohibited'],
@@ -104,6 +126,7 @@ final class PaginaRequest extends FormRequest
             'slug.regex' => 'La dirección solo admite minúsculas, números y guiones: «historia-del-mam».',
             'slug.unique' => 'Ya hay otra página con esa dirección en esa sección.',
             'orden.min' => 'El orden no puede ser negativo.',
+            'tamano_kb.min' => 'El tamaño debe ser mayor que cero.',
             'revisado.prohibited' => 'La revisión se marca desde su propia acción y solo la puede hacer el validador lingüístico.',
         ];
     }
@@ -120,6 +143,8 @@ final class PaginaRequest extends FormRequest
             'cuerpo' => 'el cuerpo',
             'orden' => 'el orden',
             'video_url' => 'la dirección del video',
+            'archivo_url' => 'la dirección del PDF',
+            'tamano_kb' => 'el tamaño',
             'fuente_id' => 'la fuente',
         ];
     }

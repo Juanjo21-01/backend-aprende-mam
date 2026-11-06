@@ -42,7 +42,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Table('paginas')]
 #[UsePolicy(PaginaPolicy::class)]
 #[ObservedBy([PublishableContentObserver::class, RevisionAuthorshipObserver::class])]
-#[Fillable(['seccion', 'slug', 'titulo', 'cuerpo', 'orden', 'video_url', 'fuente_id'])]
+#[Fillable(['seccion', 'slug', 'titulo', 'cuerpo', 'orden', 'video_url', 'archivo_url', 'tamano_kb', 'fuente_id'])]
 class Pagina extends Model
 {
     /** @use HasFactory<PaginaFactory> */
@@ -59,6 +59,7 @@ class Pagina extends Model
         return [
             'seccion' => SeccionPagina::class,
             'orden' => 'integer',
+            'tamano_kb' => 'integer',
             'revisado' => 'boolean',
             'revisado_en' => 'datetime',
         ];

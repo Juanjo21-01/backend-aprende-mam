@@ -31,6 +31,8 @@ interface Formulario {
     cuerpo: string;
     orden: string;
     video_url: string;
+    archivo_url: string;
+    tamano_kb: string;
     fuente_id: string;
 }
 
@@ -41,6 +43,8 @@ const VACIO: Formulario = {
     cuerpo: "",
     orden: "0",
     video_url: "",
+    archivo_url: "",
+    tamano_kb: "",
     fuente_id: "",
 };
 
@@ -52,11 +56,16 @@ function desdePagina(pagina: PaginaEditorial): Formulario {
         cuerpo: pagina.cuerpo,
         orden: String(pagina.orden),
         video_url: pagina.video_url ?? "",
+        archivo_url: pagina.archivo_url ?? "",
+        tamano_kb: pagina.tamano_kb?.toString() ?? "",
         fuente_id: pagina.fuente_id?.toString() ?? "",
     };
 }
 
 function aDatos(formulario: Formulario): DatosPagina {
+    // El PDF adjunto es solo de la base legal: si la página se mueve a otra sección, se suelta.
+    const conArchivo = formulario.seccion === "base_legal" && formulario.archivo_url.trim() !== "";
+
     return {
         seccion: formulario.seccion,
         slug: formulario.slug,
@@ -64,6 +73,8 @@ function aDatos(formulario: Formulario): DatosPagina {
         cuerpo: formulario.cuerpo,
         orden: formulario.orden === "" ? 0 : Number(formulario.orden),
         video_url: formulario.video_url.trim() === "" ? null : formulario.video_url,
+        archivo_url: conArchivo ? formulario.archivo_url : null,
+        tamano_kb: conArchivo && formulario.tamano_kb !== "" ? Number(formulario.tamano_kb) : null,
         fuente_id: formulario.fuente_id === "" ? null : Number(formulario.fuente_id),
     };
 }
@@ -342,6 +353,51 @@ export function FormularioPagina() {
                         <p className="error-campo">{errorDe("video_url")}</p>
                     )}
                 </div>
+
+                {formulario.seccion === "base_legal" && (
+                    <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
+                        <div>
+                            <label className="etiqueta" htmlFor="archivo">
+                                Documento PDF{" "}
+                                <span className="font-normal text-tinta-suave">(opcional)</span>
+                            </label>
+                            <input
+                                id="archivo"
+                                className="campo"
+                                value={formulario.archivo_url}
+                                onChange={(evento) => cambiar("archivo_url", evento.target.value)}
+                                placeholder="https://drive.google.com/file/d/…/view"
+                                autoComplete="off"
+                                spellCheck={false}
+                            />
+                            <p className="ayuda">
+                                El texto oficial de la ley o el acuerdo. Enlace de Google Drive,
+                                dirección https a un .pdf o ruta del sitio que empiece con «/». El
+                                archivo se coloca aparte; aquí no se sube.
+                            </p>
+                            {errorDe("archivo_url") !== undefined && (
+                                <p className="error-campo">{errorDe("archivo_url")}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label className="etiqueta" htmlFor="tamano">
+                                Tamaño (KB)
+                            </label>
+                            <input
+                                id="tamano"
+                                className="campo"
+                                type="number"
+                                min={1}
+                                value={formulario.tamano_kb}
+                                onChange={(evento) => cambiar("tamano_kb", evento.target.value)}
+                            />
+                            {errorDe("tamano_kb") !== undefined && (
+                                <p className="error-campo">{errorDe("tamano_kb")}</p>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 <div>
                     <label className="etiqueta" htmlFor="fuente">

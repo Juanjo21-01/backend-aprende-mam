@@ -32,6 +32,8 @@ final class PaginaResource extends JsonResource
             'cuerpo' => $this->cuerpo,
             'orden' => $this->orden,
             'video_url' => $this->video_url,
+            'archivo_url' => $this->archivo_url,
+            'tamano_kb' => $this->tamano_kb,
             'fuente_id' => $this->fuente_id,
             'fuente' => FuenteResource::make($this->whenLoaded('fuente')),
 

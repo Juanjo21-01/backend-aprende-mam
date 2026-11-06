@@ -100,6 +100,8 @@ final class ExportController extends Controller
                     'cuerpo' => $pagina->cuerpo,
                     'orden' => $pagina->orden,
                     'video_url' => $pagina->video_url,
+                    'archivo_url' => $pagina->archivo_url,
+                    'tamano_kb' => $pagina->tamano_kb,
                     'fuente' => $this->fuenteComoArreglo($pagina->fuente),
                 ])
                 ->values()

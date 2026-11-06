@@ -172,6 +172,9 @@ export function ListaPaginas() {
                                                     {pagina.video_url !== null && (
                                                         <span>Con video</span>
                                                     )}
+                                                    {pagina.archivo_url !== null && (
+                                                        <span>Con PDF</span>
+                                                    )}
                                                 </div>
 
                                                 <div className="acciones-fila border-t border-borde pt-2 whitespace-nowrap">

@@ -156,6 +156,8 @@ final class ContenidoExportTest extends TestCase
             'cuerpo' => "## Saludos\n\nTexto.",
             'orden' => 3,
             'video_url' => 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            'archivo_url' => null,
+            'tamano_kb' => null,
             'fuente' => [
                 'titulo' => 'Gramática Pedagógica',
                 'institucion' => 'ALMG',

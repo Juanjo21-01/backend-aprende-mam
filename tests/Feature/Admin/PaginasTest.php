@@ -187,6 +187,40 @@ final class PaginasTest extends TestCase
             ->assertJsonPath('data.video_url', 'https://www.youtube.com/embed/dQw4w9WgXcQ');
     }
 
+    public function test_una_pagina_de_base_legal_lleva_un_pdf_adjunto(): void
+    {
+        $this->actingAs($this->editor())
+            ->postJson(route('admin.paginas.store'), $this->datos([
+                'seccion' => 'base_legal',
+                'archivo_url' => 'https://drive.google.com/file/d/abc123/view',
+                'tamano_kb' => 900,
+            ]))
+            ->assertCreated()
+            ->assertJsonPath('data.archivo_url', 'https://drive.google.com/file/d/abc123/view')
+            ->assertJsonPath('data.tamano_kb', 900);
+    }
+
+    public function test_el_pdf_adjunto_es_solo_de_base_legal(): void
+    {
+        $this->actingAs($this->editor())
+            ->postJson(route('admin.paginas.store'), $this->datos([
+                'archivo_url' => '/materiales/ley.pdf',
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('archivo_url');
+    }
+
+    public function test_rechaza_un_adjunto_que_no_es_pdf(): void
+    {
+        $this->actingAs($this->editor())
+            ->postJson(route('admin.paginas.store'), $this->datos([
+                'seccion' => 'base_legal',
+                'archivo_url' => 'https://example.org/ley.docx',
+            ]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('archivo_url');
+    }
+
     public function test_rechaza_las_columnas_que_el_formulario_no_puede_mandar(): void
     {
         $this->actingAs($this->editor())
