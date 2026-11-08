@@ -30,6 +30,15 @@ enum SeccionPagina: string
     }
 
     /**
+     * Si sus páginas pueden llevar un PDF adjunto: el texto oficial de una ley en la base legal,
+     * o un relato o un material para leer en cultura. Gramática no: su contenido es la lección.
+     */
+    public function admiteArchivo(): bool
+    {
+        return $this !== self::Gramatica;
+    }
+
+    /**
      * @return list<string>
      */
     public static function values(): array

@@ -19,7 +19,8 @@ use Illuminate\Validation\Rule;
  * Como `EntradaRequest`, **no normaliza**: eso es del mutator del modelo. Aquí se comprueba
  * la forma, y además dos cosas que el modelo no puede decidir porque no son ortografía:
  * que el cuerpo sea Markdown simple y que el video sea de un proveedor que el frontend
- * sabe incrustar. El PDF adjunto, solo en la base legal y con las mismas reglas que el de un
+ * sabe incrustar. El PDF adjunto, solo en cultura y en la base legal
+ * (`SeccionPagina::admiteArchivo()`) y con las mismas reglas que el de un
  * documento de materiales.
  *
  * `revisado` es `prohibited`: se marca desde su propia ruta y solo la usa el validador.
@@ -91,8 +92,10 @@ final class PaginaRequest extends FormRequest
                 'string',
                 'max:500',
                 function (string $atributo, mixed $valor, Closure $fallar): void {
-                    if ($this->seccionResultante() !== SeccionPagina::BaseLegal->value) {
-                        $fallar('Solo las páginas de base legal llevan un PDF adjunto.');
+                    $seccion = SeccionPagina::tryFrom((string) $this->seccionResultante());
+
+                    if ($seccion === null || ! $seccion->admiteArchivo()) {
+                        $fallar('Solo las páginas de cultura y de base legal llevan un PDF adjunto.');
 
                         return;
                     }

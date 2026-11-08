@@ -110,6 +110,9 @@ export const SECCIONES: { valor: SeccionPagina; nombre: string }[] = [
     { valor: 'base_legal', nombre: 'Base legal' },
 ];
 
+/** Las secciones cuyas páginas aceptan un PDF adjunto. Espejo de `SeccionPagina::admiteArchivo()`. */
+export const SECCIONES_CON_PDF: SeccionPagina[] = ['cultura', 'base_legal'];
+
 /**
  * Una página editorial, tal como la devuelve `PaginaResource`.
  *
@@ -145,7 +148,7 @@ export interface DatosPagina {
     cuerpo: string;
     orden: number;
     video_url: string | null;
-    /** PDF adjunto. Solo lo aceptan las páginas de base legal. */
+    /** PDF adjunto. Solo lo aceptan las páginas de `SECCIONES_CON_PDF`. */
     archivo_url: string | null;
     tamano_kb: number | null;
     fuente_id: number | null;

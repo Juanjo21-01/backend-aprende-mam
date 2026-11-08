@@ -200,10 +200,21 @@ final class PaginasTest extends TestCase
             ->assertJsonPath('data.tamano_kb', 900);
     }
 
-    public function test_el_pdf_adjunto_es_solo_de_base_legal(): void
+    public function test_una_pagina_de_cultura_tambien_lleva_un_pdf_adjunto(): void
     {
         $this->actingAs($this->editor())
             ->postJson(route('admin.paginas.store'), $this->datos([
+                'archivo_url' => '/materiales/relato.pdf',
+            ]))
+            ->assertCreated()
+            ->assertJsonPath('data.archivo_url', '/materiales/relato.pdf');
+    }
+
+    public function test_gramatica_no_lleva_pdf_adjunto(): void
+    {
+        $this->actingAs($this->editor())
+            ->postJson(route('admin.paginas.store'), $this->datos([
+                'seccion' => 'gramatica',
                 'archivo_url' => '/materiales/ley.pdf',
             ]))
             ->assertUnprocessable()

@@ -21,7 +21,7 @@ import { Aviso, Cargando } from "../componentes/Estados";
 import { IconoActivar, IconoDesactivar, IconoVolver } from "../componentes/Iconos";
 import { TecladoDeGrafemas } from "../componentes/TecladoDeGrafemas";
 import { usePanel } from "../panel";
-import { SECCIONES } from "../tipos";
+import { SECCIONES, SECCIONES_CON_PDF } from "../tipos";
 import type { DatosPagina, PaginaEditorial, SeccionPagina } from "../tipos";
 
 interface Formulario {
@@ -63,8 +63,9 @@ function desdePagina(pagina: PaginaEditorial): Formulario {
 }
 
 function aDatos(formulario: Formulario): DatosPagina {
-    // El PDF adjunto es solo de la base legal: si la página se mueve a otra sección, se suelta.
-    const conArchivo = formulario.seccion === "base_legal" && formulario.archivo_url.trim() !== "";
+    // El PDF adjunto es solo de cultura y base legal: si la página se mueve a gramática, se suelta.
+    const conArchivo =
+        SECCIONES_CON_PDF.includes(formulario.seccion) && formulario.archivo_url.trim() !== "";
 
     return {
         seccion: formulario.seccion,
@@ -354,7 +355,7 @@ export function FormularioPagina() {
                     )}
                 </div>
 
-                {formulario.seccion === "base_legal" && (
+                {SECCIONES_CON_PDF.includes(formulario.seccion) && (
                     <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
                         <div>
                             <label className="etiqueta" htmlFor="archivo">
@@ -371,9 +372,11 @@ export function FormularioPagina() {
                                 spellCheck={false}
                             />
                             <p className="ayuda">
-                                El texto oficial de la ley o el acuerdo. Enlace de Google Drive,
-                                dirección https a un .pdf o ruta del sitio que empiece con «/». El
-                                archivo se coloca aparte; aquí no se sube.
+                                {formulario.seccion === "base_legal"
+                                    ? "El texto oficial de la ley o el acuerdo."
+                                    : "Un relato, un texto para leer o un material que acompaña la página."}{" "}
+                                Enlace de Google Drive, dirección https a un .pdf o ruta del sitio
+                                que empiece con «/». El archivo se coloca aparte; aquí no se sube.
                             </p>
                             {errorDe("archivo_url") !== undefined && (
                                 <p className="error-campo">{errorDe("archivo_url")}</p>
